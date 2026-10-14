@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -62,7 +63,7 @@ def was_reopened(issue: Issue, mapping: StatusMapping) -> bool:
     timeline = build_timeline(issue, mapping)
     return any(
         prev.category is StatusCategory.DONE and nxt.category is not StatusCategory.DONE
-        for prev, nxt in zip(timeline, timeline[1:], strict=False)
+        for prev, nxt in itertools.pairwise(timeline)
     )
 
 
