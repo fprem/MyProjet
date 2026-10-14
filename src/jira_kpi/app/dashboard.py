@@ -58,7 +58,9 @@ def _tiles(data: DashboardData) -> None:
                 tile.label,
                 _fmt(tile, tile.value),
                 _delta(tile),
-                delta_color="normal" if tile.higher_is_better else "inverse",
+                delta_color="off"
+                if tile.trend == "flat"
+                else ("normal" if tile.higher_is_better else "inverse"),
                 help=f"{tile.help}. Delta vs periodo precedente: {_fmt(tile, tile.previous)}.",
             )
 
@@ -93,8 +95,16 @@ def _flow_tab(data: DashboardData) -> None:
 
 
 def _sprint_tab(data: DashboardData) -> None:
+    if data.active_sprint:
+        r = data.active_sprint
+        st.info(
+            f"Sprint in corso **{r.sprint.name}**: {r.completed_points:g} di "
+            f"{r.committed_points + r.added_points:g} SP completati, "
+            f"{r.added_points:g} SP aggiunti dopo l'avvio. "
+            "Escluso dai grafici di trend finché non viene chiuso."
+        )
     if not data.sprints:
-        st.info("Nessuno sprint avviato nei dati: le metriche Scrum non sono disponibili.")
+        st.info("Nessuno sprint chiuso nei dati: le metriche Scrum non sono ancora disponibili.")
         return
     left, right = st.columns(2)
     with left:

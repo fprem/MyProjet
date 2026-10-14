@@ -1,0 +1,70 @@
+import os
+import socket
+import subprocess
+import sys
+import time
+from collections.abc import Iterator
+from pathlib import Path
+from typing import Any
+
+import httpx
+import pytest
+
+DASHBOARD = Path(__file__).parents[2] / "src" / "jira_kpi" / "app" / "dashboard.py"
+CHROMIUM = Path("/opt/pw-browsers/chromium")
+
+
+@pytest.fixture(scope="session")
+def browser_type_launch_args(browser_type_launch_args: dict[str, Any]) -> dict[str, Any]:
+    # Usa il Chromium preinstallato se presente (evita download in CI/container).
+    if CHROMIUM.exists():
+        return {**browser_type_launch_args, "executable_path": str(CHROMIUM)}
+    return browser_type_launch_args
+
+
+def _free_port() -> int:
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port: int = s.getsockname()[1]
+        return port
+
+
+@pytest.fixture(scope="session")
+def dashboard_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
+    port = _free_port()
+    env = {
+        **os.environ,
+        "JIRA_KPI_DEMO": "1",
+        "JIRA_KPI_DEMO_DB": str(tmp_path_factory.mktemp("e2e") / "demo.sqlite"),
+    }
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "streamlit",
+            "run",
+            str(DASHBOARD),
+            "--server.headless=true",
+            f"--server.port={port}",
+            "--browser.gatherUsageStats=false",
+        ],
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    url = f"http://127.0.0.1:{port}"
+    try:
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            try:
+                if httpx.get(f"{url}/_stcore/health", timeout=1).status_code == 200:
+                    break
+            except httpx.HTTPError:
+                pass
+            time.sleep(0.5)
+        else:
+            pytest.fail("la dashboard non si è avviata entro 60s")
+        yield url
+    finally:
+        proc.terminate()
+        proc.wait(timeout=10)

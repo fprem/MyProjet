@@ -1,6 +1,13 @@
 # Piano: Dashboard KPI da Jira per progetto + team (TDD)
 
-> Stato: **IN ATTESA DI CONFERMA** — nessun codice scritto finché il piano non è approvato.
+> Stato: **IMPLEMENTATO** (default D1–D5 approvati). Vedi README per l'uso.
+>
+> Scostamenti dal piano:
+> - Gli sprint sono ricavati dal campo Sprint delle issue invece che dall'API Agile
+>   (nessun `board_id` obbligatorio; filtro opzionale `board_id`).
+> - Niente `pandas`: il motore KPI usa solo la libreria standard.
+> - Lo snapshot SQLite salva il JSON grezzo, così un cambio di mapping non richiede di riscaricare.
+> - Lo sprint attivo è escluso dai grafici di trend e mostrato a parte.
 
 ## 1. Requisiti (riformulati)
 

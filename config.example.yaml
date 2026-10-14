@@ -1,0 +1,28 @@
+# Copiare in config.yaml e adattare. Le credenziali NON vanno qui: usare .env.
+jira_url: https://acme.atlassian.net
+project: PAY                 # chiave del progetto Jira
+team: 8c2f1d3e-team-uuid     # id del team (campo Atlassian "Team")
+team_field: "Team[Team]"     # oppure: labels, component, ... (es. team_field: labels, team: squad-a)
+# jql_override: 'filter = 12345'   # alternativa: JQL libera (senza ORDER BY)
+
+# Id dei campi custom: trovarli con `jira-kpi discover-fields`
+story_points_field: customfield_10016
+sprint_field: customfield_10020
+# board_id: 3               # considera solo gli sprint di questa board
+
+bug_types: [Bug]
+timezone: Europe/Rome
+db_path: data/jira_kpi.sqlite
+
+# Mapping degli stati del workflow -> categoria (todo | in_progress | waiting | done).
+# Gli stati non elencati ricadono in `default_category`.
+status_mapping:
+  To Do: todo
+  Backlog: todo
+  In Progress: in_progress
+  Code Review: in_progress
+  Waiting for QA: waiting
+  Blocked: waiting
+  Done: done
+  Closed: done
+default_category: todo

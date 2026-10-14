@@ -23,6 +23,7 @@ dev = [
 ]
 e2e = ["pytest-playwright>=0.5"]
 
+
 [project.scripts]
 jira-kpi = "jira_kpi.cli:main"
 

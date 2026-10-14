@@ -64,7 +64,7 @@ def _sprints(now: datetime, count: int) -> list[dict[str, Any]]:
 
 
 def generate_raw_issues(
-    now: datetime, *, seed: int = 7, sprint_count: int = 8
+    now: datetime, *, seed: int = 7, sprint_count: int = 14
 ) -> list[dict[str, Any]]:
     rng = random.Random(seed)
     sprints = _sprints(now, sprint_count)

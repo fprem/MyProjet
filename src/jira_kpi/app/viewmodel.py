@@ -64,7 +64,8 @@ class DashboardData:
     cycle_time_points: list[IssueDuration]
     cycle_time_stats: DurationStats | None
     aging: list[AgingItem]
-    sprints: list[SprintReport]
+    sprints: list[SprintReport]  # solo sprint chiusi: i dati di uno sprint attivo sono parziali
+    active_sprint: SprintReport | None
     velocity_trend: list[float]
     bug_resolution: dict[str, DurationStats]
 
@@ -76,6 +77,10 @@ def _wip_at(issues: Iterable[Issue], mapping: StatusMapping, instant: datetime) 
         if category is not None and category.is_started:
             count += 1
     return count
+
+
+def _is_closed(sprint: Sprint) -> bool:
+    return sprint.complete_date is not None or sprint.state.casefold() == "closed"
 
 
 def _mean_or_none(values: Iterable[float | None]) -> float | None:
@@ -154,7 +159,9 @@ def build_dashboard(
         KpiTile(key, label, current[key], previous[key], unit, better, help_)
         for key, label, unit, better, help_ in TILE_SPECS
     ]
-    visible = [r for r in reports if r.sprint.start and r.sprint.start < period.end][-MAX_SPRINTS:]
+    started = [r for r in reports if r.sprint.start and r.sprint.start < period.end]
+    visible = [r for r in started if _is_closed(r.sprint)][-MAX_SPRINTS:]
+    active = next((r for r in reversed(started) if not _is_closed(r.sprint)), None)
     cycle = cycle_times(issues, mapping, period)
     return DashboardData(
         period=period,
@@ -165,6 +172,7 @@ def build_dashboard(
         cycle_time_stats=duration_stats([d.days for d in cycle]),
         aging=aging_wip(issues, mapping, now),
         sprints=visible,
+        active_sprint=active,
         velocity_trend=rolling_average([r.completed_points for r in visible], 3),
         bug_resolution=bug_resolution_times(issues, mapping, period, bug_types),
     )

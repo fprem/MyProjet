@@ -101,3 +101,16 @@ class TestBuildDashboard:
         assert tiles["cycle_time_p85"].value is None
         assert tiles["velocity"].value is None
         assert data.sprints == []
+
+
+class TestActiveSprint:
+    def test_active_sprint_is_excluded_from_trend_charts(self) -> None:
+        issues, sprints, period = scenario()
+        active = Sprint(11, "S11", "active", start=dt(19, 13), end=dt(2, month=2))
+        data = build_dashboard(
+            issues, [*sprints, active], MAPPING, period, now=dt(25), tz=UTC, bug_types=["Bug"]
+        )
+        assert [r.sprint.id for r in data.sprints] == [10]
+        assert data.velocity_trend == [8.0]
+        assert data.active_sprint is not None
+        assert data.active_sprint.sprint.id == 11
