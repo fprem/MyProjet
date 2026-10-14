@@ -8,7 +8,6 @@ from jira_kpi.kpi.flow import (
     aging_wip,
     cumulative_flow,
     cycle_times,
-    daily_wip,
     duration_stats,
     flow_efficiency,
     lead_times,
@@ -106,7 +105,7 @@ class TestThroughput:
         assert dict(result)[date(2026, 1, 5)] == 1
 
 
-class TestCumulativeFlowAndWip:
+class TestCumulativeFlow:
     def test_category_counts_at_end_of_each_day(self) -> None:
         a = make_issue(
             "A-1", created=dt(1), transitions=[(dt(2, 10), "In Progress"), (dt(3, 10), "Done")]
@@ -118,16 +117,6 @@ class TestCumulativeFlowAndWip:
         assert cfd[0][1] == {StatusCategory.TODO: 1}
         assert cfd[1][1] == {StatusCategory.IN_PROGRESS: 1, StatusCategory.WAITING: 1}
         assert cfd[2][1] == {StatusCategory.DONE: 1, StatusCategory.WAITING: 1}
-
-    def test_daily_wip_counts_started_not_done(self) -> None:
-        a = make_issue("A-1", transitions=[(dt(2, 10), "In Progress"), (dt(3, 10), "Done")])
-        b = make_issue("A-2", transitions=[(dt(2, 11), "Waiting for QA")])
-        period = Period(dt(1), dt(4))
-        assert daily_wip([a, b], MAPPING, period, ZoneInfo("UTC")) == [
-            (date(2026, 1, 1), 0),
-            (date(2026, 1, 2), 2),
-            (date(2026, 1, 3), 1),
-        ]
 
 
 class TestFlowEfficiency:

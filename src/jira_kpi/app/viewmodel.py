@@ -23,7 +23,7 @@ from jira_kpi.kpi.flow import (
     throughput,
 )
 from jira_kpi.kpi.quality import bug_ratio, bug_resolution_times, reopen_rate
-from jira_kpi.kpi.scrum import SprintReport, rolling_average, sprint_reports
+from jira_kpi.kpi.scrum import SprintReport, rolling_average, sprint_report, sprint_reports
 
 Trend = Literal["better", "worse", "flat"]
 MAX_SPRINTS = 12
@@ -64,7 +64,7 @@ class DashboardData:
     cycle_time_points: list[IssueDuration]
     cycle_time_stats: DurationStats | None
     aging: list[AgingItem]
-    sprints: list[SprintReport]  # solo sprint chiusi: i dati di uno sprint attivo sono parziali
+    sprints: list[SprintReport]  # solo sprint chiusi
     active_sprint: SprintReport | None
     velocity_trend: list[float]
     bug_resolution: dict[str, DurationStats]
@@ -77,10 +77,6 @@ def _wip_at(issues: Iterable[Issue], mapping: StatusMapping, instant: datetime) 
         if category is not None and category.is_started:
             count += 1
     return count
-
-
-def _is_closed(sprint: Sprint) -> bool:
-    return sprint.complete_date is not None or sprint.state.casefold() == "closed"
 
 
 def _mean_or_none(values: Iterable[float | None]) -> float | None:
@@ -117,6 +113,17 @@ def _period_metrics(
         "bug_ratio": bug_ratio(issues, mapping, period, bug_types),
         "reopen_rate": reopen_rate(issues, mapping, period),
     }
+
+
+def _active_sprint_report(
+    sprints: Iterable[Sprint], issues: Sequence[Issue], mapping: StatusMapping, now: datetime
+) -> SprintReport | None:
+    """Avanzamento dello sprint attivo più recente, calcolato a `now`."""
+    active = [s for s in sprints if s.is_active and s.start and s.start <= now]
+    if not active:
+        return None
+    latest = max(active, key=lambda s: s.start)  # type: ignore[arg-type, return-value]
+    return sprint_report(latest, issues, mapping, as_of=now)
 
 
 # (chiave, etichetta, unità, più alto = meglio, descrizione)
@@ -159,9 +166,8 @@ def build_dashboard(
         KpiTile(key, label, current[key], previous[key], unit, better, help_)
         for key, label, unit, better, help_ in TILE_SPECS
     ]
-    started = [r for r in reports if r.sprint.start and r.sprint.start < period.end]
-    visible = [r for r in started if _is_closed(r.sprint)][-MAX_SPRINTS:]
-    active = next((r for r in reversed(started) if not _is_closed(r.sprint)), None)
+    visible = [r for r in reports if r.sprint.start and r.sprint.start < period.end]
+    visible = visible[-MAX_SPRINTS:]
     cycle = cycle_times(issues, mapping, period)
     return DashboardData(
         period=period,
@@ -172,7 +178,7 @@ def build_dashboard(
         cycle_time_stats=duration_stats([d.days for d in cycle]),
         aging=aging_wip(issues, mapping, now),
         sprints=visible,
-        active_sprint=active,
+        active_sprint=_active_sprint_report(sprints, issues, mapping, now),
         velocity_trend=rolling_average([r.completed_points for r in visible], 3),
         bug_resolution=bug_resolution_times(issues, mapping, period, bug_types),
     )

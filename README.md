@@ -48,7 +48,8 @@ Il team si identifica con la JQL `project = "<project>" AND "<team_field>" = "<t
 | | Reopen rate | Issue completate che erano state riaperte |
 
 Ogni tile mostra il delta rispetto al periodo precedente di uguale durata. Lo sprint in corso
-è escluso dai grafici di trend (dati parziali). Una issue riaperta conta come completata alla
+è escluso da velocity e say/do (tile e grafici, dati parziali) e mostrato a parte con
+l'avanzamento calcolato a oggi. Una issue riaperta conta come completata alla
 sua **ultima** chiusura.
 
 ## Architettura

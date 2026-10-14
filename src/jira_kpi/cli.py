@@ -14,7 +14,7 @@ from typing import Any, Protocol
 from pydantic import ValidationError
 
 from jira_kpi.config import JiraCredentials, Settings, load_settings
-from jira_kpi.demo import generate_raw_issues
+from jira_kpi.demo import write_demo_db
 from jira_kpi.jira.client import JiraClient, JiraError
 from jira_kpi.storage.repository import IssueRepository
 from jira_kpi.sync import IssueSource, sync
@@ -77,11 +77,7 @@ def _cmd_discover(args: argparse.Namespace, factory: ClientFactory) -> None:
 
 
 def _cmd_demo(args: argparse.Namespace, now: datetime) -> None:
-    with IssueRepository(args.db) as repo:
-        repo.clear()
-        repo.upsert(generate_raw_issues(now))
-        repo.set_last_sync(now)
-        count = repo.count()
+    count = write_demo_db(args.db, now)
     print(f"Creato database demo con {count} issue: {args.db}")
 
 

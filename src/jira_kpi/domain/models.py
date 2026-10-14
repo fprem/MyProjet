@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import StrEnum
 
@@ -78,6 +78,15 @@ class Sprint:
     def effective_end(self) -> datetime | None:
         return self.complete_date or self.end
 
+    @property
+    def is_closed(self) -> bool:
+        return self.complete_date is not None or self.state.casefold() == "closed"
+
+    @property
+    def is_active(self) -> bool:
+        """In corso: stato `active` in Jira e non ancora completato."""
+        return not self.is_closed and self.state.casefold() == "active"
+
 
 @dataclass(frozen=True)
 class Issue:
@@ -101,9 +110,6 @@ class Issue:
     @property
     def points(self) -> float:
         return float(self.story_points or 0.0)
-
-    def with_transitions(self, transitions: tuple[StatusTransition, ...]) -> Issue:
-        return replace(self, transitions=transitions)
 
 
 @dataclass(frozen=True)

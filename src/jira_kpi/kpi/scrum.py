@@ -36,6 +36,11 @@ class SprintReport:
     carried_over_count: int
     say_do_ratio: float | None
 
+    @property
+    def scope_points(self) -> float:
+        """Perimetro finale: committati + aggiunti - rimossi."""
+        return self.committed_points + self.added_points - self.removed_points
+
 
 def _added_during(issue: Issue, sprint_id: int, start: datetime, end: datetime) -> bool:
     return any(
@@ -44,8 +49,15 @@ def _added_during(issue: Issue, sprint_id: int, start: datetime, end: datetime) 
     )
 
 
-def sprint_report(sprint: Sprint, issues: Iterable[Issue], mapping: StatusMapping) -> SprintReport:
-    start, end = sprint.start, sprint.effective_end
+def sprint_report(
+    sprint: Sprint,
+    issues: Iterable[Issue],
+    mapping: StatusMapping,
+    *,
+    as_of: datetime | None = None,
+) -> SprintReport:
+    """Report dello sprint alla sua chiusura, o all'istante `as_of` (es. sprint in corso)."""
+    start, end = sprint.start, as_of or sprint.effective_end
     if start is None or end is None:
         raise ValueError(f"lo sprint {sprint.name!r} non ha date di inizio/fine")
 
@@ -92,10 +104,14 @@ def sprint_report(sprint: Sprint, issues: Iterable[Issue], mapping: StatusMappin
 def sprint_reports(
     sprints: Iterable[Sprint], issues: Sequence[Issue], mapping: StatusMapping
 ) -> list[SprintReport]:
-    """Report per tutti gli sprint avviati, in ordine di inizio."""
-    started = [s for s in sprints if s.start is not None and s.effective_end is not None]
-    started.sort(key=lambda s: s.start)  # type: ignore[arg-type, return-value]
-    return [sprint_report(s, issues, mapping) for s in started]
+    """Report degli sprint chiusi, in ordine di inizio.
+
+    Gli sprint in corso sono esclusi: i loro numeri sono parziali e falserebbero
+    velocity e say/do. Per uno sprint attivo usare `sprint_report(..., as_of=now)`.
+    """
+    closed = [s for s in sprints if s.is_closed and s.start and s.effective_end]
+    closed.sort(key=lambda s: s.start)  # type: ignore[arg-type, return-value]
+    return [sprint_report(s, issues, mapping) for s in closed]
 
 
 def rolling_average(values: Sequence[float], window: int) -> list[float]:

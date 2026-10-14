@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import timedelta
 
 from jira_kpi.domain.models import StatusCategory
@@ -36,7 +37,7 @@ class TestBuildTimeline:
 
     def test_out_of_order_transitions_are_sorted(self) -> None:
         issue = make_issue(transitions=[(dt(2), "In Progress"), (dt(4), "Done")])
-        shuffled = issue.with_transitions(tuple(reversed(issue.transitions)))
+        shuffled = replace(issue, transitions=tuple(reversed(issue.transitions)))
         assert [i.status for i in build_timeline(shuffled, MAPPING)] == [
             "To Do",
             "In Progress",

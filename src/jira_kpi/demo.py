@@ -4,14 +4,19 @@ from __future__ import annotations
 
 import random
 from datetime import datetime, time, timedelta
+from pathlib import Path
 from typing import Any
 
 from jira_kpi.config import Settings
 from jira_kpi.domain.models import StatusCategory, StatusMapping
+from jira_kpi.storage.repository import IssueRepository
 
 SP_FIELD = "customfield_10016"
 SPRINT_FIELD = "customfield_10020"
 SPRINT_LENGTH = timedelta(days=14)
+# Incrementare quando cambia il generatore: i DB demo esistenti verranno rigenerati.
+DEMO_VERSION = "2"
+DEMO_MAX_AGE = timedelta(days=1)
 
 DEMO_STATUS_MAPPING = {
     "To Do": StatusCategory.TODO,
@@ -32,6 +37,34 @@ def demo_settings(db_path: str = "data/demo.sqlite") -> Settings:
         db_path=db_path,
         status_mapping=DEMO_STATUS_MAPPING,
     )
+
+
+def ensure_demo_db(path: str | Path, now: datetime) -> bool:
+    """Crea o rigenera il DB demo se manca, è di una versione precedente o è scaduto.
+
+    Ritorna True se il DB è stato (ri)generato.
+    """
+    with IssueRepository(path) as repo:
+        last = repo.last_sync()
+        if (
+            repo.count()
+            and repo.get_meta("demo_version") == DEMO_VERSION
+            and last is not None
+            and now - last < DEMO_MAX_AGE
+        ):
+            return False
+    write_demo_db(path, now)
+    return True
+
+
+def write_demo_db(path: str | Path, now: datetime) -> int:
+    """Sovrascrive il DB con dati demo freschi. Ritorna il numero di issue."""
+    with IssueRepository(path) as repo:
+        repo.clear()
+        repo.upsert(generate_raw_issues(now))
+        repo.set_last_sync(now)
+        repo.set_meta("demo_version", DEMO_VERSION)
+        return repo.count()
 
 
 def _fmt(at: datetime) -> str:

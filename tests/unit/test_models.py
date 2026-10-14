@@ -1,9 +1,15 @@
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from datetime import datetime
 
 import pytest
 
-from jira_kpi.domain.models import Period, StatusCategory, StatusMapping, StatusTransition
+from jira_kpi.domain.models import (
+    Period,
+    Sprint,
+    StatusCategory,
+    StatusMapping,
+    StatusTransition,
+)
 from tests.builders import dt, make_issue
 
 
@@ -34,7 +40,7 @@ class TestStatusTransition:
 class TestIssue:
     def test_transitions_are_sorted_chronologically(self) -> None:
         issue = make_issue(transitions=[(dt(3), "In Progress"), (dt(5), "Done")])
-        reordered = issue.with_transitions(tuple(reversed(issue.transitions)))
+        reordered = replace(issue, transitions=tuple(reversed(issue.transitions)))
         assert [t.at for t in reordered.transitions] == [dt(3), dt(5)]
 
     def test_requires_timezone_aware_created(self) -> None:
@@ -59,3 +65,23 @@ class TestPeriod:
 
     def test_previous_has_same_length_and_ends_at_start(self) -> None:
         assert Period(dt(8), dt(15)).previous() == Period(dt(1), dt(8))
+
+
+class TestSprintState:
+    @pytest.mark.parametrize(
+        ("state", "complete_date", "closed", "active"),
+        [
+            ("closed", dt(19), True, False),
+            ("closed", None, True, False),
+            ("active", None, False, True),
+            ("ACTIVE", None, False, True),
+            ("future", None, False, False),
+            ("active", dt(19), True, False),  # completeDate prevale
+        ],
+    )
+    def test_closed_and_active(
+        self, state: str, complete_date: datetime | None, closed: bool, active: bool
+    ) -> None:
+        sprint = Sprint(1, "S", state, start=dt(5), end=dt(19), complete_date=complete_date)
+        assert sprint.is_closed is closed
+        assert sprint.is_active is active

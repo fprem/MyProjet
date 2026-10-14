@@ -92,11 +92,12 @@ class TestSprintReport:
 
 
 class TestSprintReports:
-    def test_only_started_sprints_ordered_by_start(self) -> None:
-        later = Sprint(id=11, name="Sprint 11", state="active", start=dt(19, 13), end=dt(2, 2))
+    def test_only_closed_sprints_ordered_by_start(self) -> None:
+        earlier = Sprint(id=9, name="Sprint 9", state="closed", start=dt(1), end=dt(5))
+        active = Sprint(id=11, name="Sprint 11", state="active", start=dt(19, 13), end=dt(2, 2))
         future = Sprint(id=12, name="Sprint 12", state="future")
-        reports = sprint_reports([later, future, SPRINT], [], MAPPING)
-        assert [r.sprint.id for r in reports] == [10, 11]
+        reports = sprint_reports([active, future, SPRINT, earlier], [], MAPPING)
+        assert [r.sprint.id for r in reports] == [9, 10]
 
 
 class TestRollingAverage:
@@ -105,3 +106,29 @@ class TestRollingAverage:
 
     def test_empty(self) -> None:
         assert rolling_average([], 3) == []
+
+
+class TestSprintReportAsOf:
+    def test_as_of_overrides_planned_end(self) -> None:
+        active = Sprint(10, "S10", "active", start=dt(5), end=dt(19))
+        late_done = committed("A-1", 5, [(dt(20), "Done")])
+        late_added = make_issue(
+            "A-2",
+            story_points=3,
+            sprint_ids=frozenset({10}),
+            sprint_changes=[(dt(20), set(), {10})],
+        )
+        report = sprint_report(active, [late_done, late_added], MAPPING, as_of=dt(21))
+        assert report.completed_points == 5
+        assert report.added_points == 3
+
+    def test_scope_points_excludes_removed(self) -> None:
+        kept = committed("A-1", 20)
+        removed = make_issue(
+            "A-2",
+            story_points=5,
+            sprint_ids=frozenset(),
+            sprint_changes=[(dt(4), set(), {10}), (dt(9), {10}, set())],
+        )
+        report = sprint_report(SPRINT, [kept, removed], MAPPING)
+        assert report.scope_points == 20

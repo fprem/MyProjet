@@ -37,34 +37,43 @@ def dashboard_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
         "JIRA_KPI_DEMO": "1",
         "JIRA_KPI_DEMO_DB": str(tmp_path_factory.mktemp("e2e") / "demo.sqlite"),
     }
-    proc = subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "streamlit",
-            "run",
-            str(DASHBOARD),
-            "--server.headless=true",
-            f"--server.port={port}",
-            "--browser.gatherUsageStats=false",
-        ],
-        env=env,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    url = f"http://127.0.0.1:{port}"
-    try:
-        deadline = time.monotonic() + 60
-        while time.monotonic() < deadline:
+    log_path = tmp_path_factory.mktemp("e2e-log") / "streamlit.log"
+    with log_path.open("w") as log:
+        proc = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "streamlit",
+                "run",
+                str(DASHBOARD),
+                "--server.headless=true",
+                f"--server.port={port}",
+                "--browser.gatherUsageStats=false",
+            ],
+            env=env,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+        )
+        try:
+            yield _wait_until_healthy(proc, f"http://127.0.0.1:{port}", log_path)
+        finally:
+            proc.terminate()
             try:
-                if httpx.get(f"{url}/_stcore/health", timeout=1).status_code == 200:
-                    break
-            except httpx.HTTPError:
-                pass
-            time.sleep(0.5)
-        else:
-            pytest.fail("la dashboard non si è avviata entro 60s")
-        yield url
-    finally:
-        proc.terminate()
-        proc.wait(timeout=10)
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait()
+
+
+def _wait_until_healthy(proc: subprocess.Popen[bytes], url: str, log_path: Path) -> str:
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        if proc.poll() is not None:
+            pytest.fail(f"dashboard terminata (exit {proc.returncode}):\n{log_path.read_text()}")
+        try:
+            if httpx.get(f"{url}/_stcore/health", timeout=1).status_code == 200:
+                return url
+        except httpx.HTTPError:
+            pass
+        time.sleep(0.5)
+    pytest.fail(f"la dashboard non si è avviata entro 60s:\n{log_path.read_text()}")

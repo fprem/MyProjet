@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 from datetime import UTC, datetime
-from pathlib import Path
 
 import streamlit as st
 
@@ -12,18 +11,13 @@ from jira_kpi.app import charts
 from jira_kpi.app.data import PRESETS, Dataset, load_dataset, period_for_preset
 from jira_kpi.app.viewmodel import DashboardData, KpiTile, build_dashboard
 from jira_kpi.config import Settings, load_settings
-from jira_kpi.demo import demo_settings, generate_raw_issues
-from jira_kpi.storage.repository import IssueRepository
+from jira_kpi.demo import demo_settings, ensure_demo_db
 
 
 def _settings() -> tuple[Settings, bool]:
     if os.environ.get("JIRA_KPI_DEMO") == "1":
         settings = demo_settings(os.environ.get("JIRA_KPI_DEMO_DB", "data/demo.sqlite"))
-        if not Path(settings.db_path).exists():
-            now = datetime.now(UTC)
-            with IssueRepository(settings.db_path) as repo:
-                repo.upsert(generate_raw_issues(now))
-                repo.set_last_sync(now)
+        ensure_demo_db(settings.db_path, datetime.now(UTC))
         return settings, True
     return load_settings(os.environ.get("JIRA_KPI_CONFIG", "config.yaml")), False
 
@@ -99,7 +93,7 @@ def _sprint_tab(data: DashboardData) -> None:
         r = data.active_sprint
         st.info(
             f"Sprint in corso **{r.sprint.name}**: {r.completed_points:g} di "
-            f"{r.committed_points + r.added_points:g} SP completati, "
+            f"{r.scope_points:g} SP completati, "
             f"{r.added_points:g} SP aggiunti dopo l'avvio. "
             "Escluso dai grafici di trend finché non viene chiuso."
         )
@@ -118,7 +112,6 @@ def _sprint_tab(data: DashboardData) -> None:
         [
             {
                 "Sprint": r.sprint.name,
-                "Stato": r.sprint.state,
                 "SP committati": r.committed_points,
                 "SP aggiunti": r.added_points,
                 "SP rimossi": r.removed_points,

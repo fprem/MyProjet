@@ -41,11 +41,11 @@ class IssueRepository:
     def close(self) -> None:
         self._conn.close()
 
-    def _get_meta(self, name: str) -> str | None:
+    def get_meta(self, name: str) -> str | None:
         row = self._conn.execute("SELECT value FROM meta WHERE name = ?", (name,)).fetchone()
         return row[0] if row else None
 
-    def _set_meta(self, name: str, value: str) -> None:
+    def set_meta(self, name: str, value: str) -> None:
         with self._conn:
             self._conn.execute(
                 "INSERT INTO meta(name, value) VALUES (?, ?) "
@@ -55,10 +55,10 @@ class IssueRepository:
 
     def ensure_scope(self, jql: str) -> bool:
         """Svuota lo snapshot se la JQL è cambiata. Ritorna True se il DB è stato azzerato."""
-        if self._get_meta("jql") == jql:
+        if self.get_meta("jql") == jql:
             return False
         self.clear()
-        self._set_meta("jql", jql)
+        self.set_meta("jql", jql)
         return True
 
     def clear(self) -> None:
@@ -83,8 +83,8 @@ class IssueRepository:
         return result
 
     def last_sync(self) -> datetime | None:
-        value = self._get_meta("last_sync")
+        value = self.get_meta("last_sync")
         return datetime.fromisoformat(value) if value else None
 
     def set_last_sync(self, instant: datetime) -> None:
-        self._set_meta("last_sync", instant.isoformat())
+        self.set_meta("last_sync", instant.isoformat())

@@ -2,7 +2,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from jira_kpi.app.viewmodel import KpiTile, build_dashboard
+from jira_kpi.app.viewmodel import DashboardData, KpiTile, build_dashboard
 from jira_kpi.domain.models import Period, Sprint
 from tests.builders import MAPPING, dt, make_issue
 
@@ -104,13 +104,52 @@ class TestBuildDashboard:
 
 
 class TestActiveSprint:
-    def test_active_sprint_is_excluded_from_trend_charts(self) -> None:
+    def _build(self, *extra: Sprint) -> "DashboardData":
         issues, sprints, period = scenario()
-        active = Sprint(11, "S11", "active", start=dt(19, 13), end=dt(2, month=2))
-        data = build_dashboard(
-            issues, [*sprints, active], MAPPING, period, now=dt(25), tz=UTC, bug_types=["Bug"]
+        return build_dashboard(
+            issues, [*sprints, *extra], MAPPING, period, now=dt(25), tz=UTC, bug_types=["Bug"]
         )
+
+    def test_excluded_from_trend_charts(self) -> None:
+        data = self._build(Sprint(11, "S11", "active", start=dt(19, 13), end=dt(2, month=2)))
         assert [r.sprint.id for r in data.sprints] == [10]
         assert data.velocity_trend == [8.0]
         assert data.active_sprint is not None
         assert data.active_sprint.sprint.id == 11
+
+    def test_overdue_active_sprint_does_not_leak_into_tiles(self) -> None:
+        # pianificato fino al 22 (dentro il periodo) ma ancora attivo il 25
+        overdue = Sprint(11, "S11", "active", start=dt(19, 13), end=dt(22))
+        tiles = {t.key: t for t in self._build(overdue).tiles}
+        assert tiles["velocity"].value == 8
+        assert tiles["say_do"].value == pytest.approx(1.0)
+
+    def test_active_report_is_computed_at_now(self) -> None:
+        overdue = Sprint(11, "S11", "active", start=dt(19, 13), end=dt(22))
+        issues, sprints, period = scenario()
+        done_today = make_issue(
+            "C-1",
+            story_points=4,
+            transitions=[(dt(24), "Done")],
+            sprint_ids=frozenset({11}),
+            sprint_changes=[(dt(19), set(), {11})],
+        )
+        data = build_dashboard(
+            [*issues, done_today],
+            [*sprints, overdue],
+            MAPPING,
+            period,
+            now=dt(25),
+            tz=UTC,
+            bug_types=["Bug"],
+        )
+        assert data.active_sprint is not None
+        assert data.active_sprint.completed_points == 4
+
+    def test_future_sprint_with_past_start_is_not_active(self) -> None:
+        late_future = Sprint(12, "S12", "future", start=dt(20), end=dt(3, month=2))
+        active = Sprint(11, "S11", "active", start=dt(19, 13), end=dt(2, month=2))
+        data = self._build(active, late_future)
+        assert data.active_sprint is not None
+        assert data.active_sprint.sprint.id == 11
+        assert [r.sprint.id for r in data.sprints] == [10]

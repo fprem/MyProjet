@@ -1,5 +1,9 @@
-from jira_kpi.demo import DEMO_MAPPING, demo_settings, generate_raw_issues
+from datetime import timedelta
+from pathlib import Path
+
+from jira_kpi.demo import DEMO_MAPPING, demo_settings, ensure_demo_db, generate_raw_issues
 from jira_kpi.jira.mapper import IssueMapper
+from jira_kpi.storage.repository import IssueRepository
 from tests.builders import dt
 
 NOW = dt(14, 12, month=10)
@@ -31,3 +35,18 @@ def test_no_events_in_the_future() -> None:
         assert all(c.at <= NOW for c in issue.sprint_changes)
         if issue.transitions:
             assert issue.transitions[-1].to_status == issue.status
+
+
+def test_ensure_demo_db_creates_and_reuses(tmp_path: Path) -> None:
+    db = tmp_path / "demo.sqlite"
+    assert ensure_demo_db(db, NOW) is True
+    assert ensure_demo_db(db, NOW) is False
+
+
+def test_ensure_demo_db_regenerates_outdated_data(tmp_path: Path) -> None:
+    db = tmp_path / "demo.sqlite"
+    with IssueRepository(db) as repo:  # snapshot di una versione precedente, senza versione
+        repo.upsert(generate_raw_issues(NOW, sprint_count=8))
+        repo.set_last_sync(NOW)
+    assert ensure_demo_db(db, NOW) is True
+    assert ensure_demo_db(db, NOW + timedelta(days=2)) is True  # dati demo scaduti

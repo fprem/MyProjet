@@ -135,15 +135,6 @@ def cumulative_flow(
     return result
 
 
-def daily_wip(
-    issues: Sequence[Issue], mapping: StatusMapping, period: Period, tz: tzinfo
-) -> list[tuple[date, int]]:
-    return [
-        (day, sum(n for cat, n in counts.items() if cat.is_started))
-        for day, counts in cumulative_flow(issues, mapping, period, tz)
-    ]
-
-
 def flow_efficiency(
     issues: Iterable[Issue], mapping: StatusMapping, period: Period
 ) -> float | None:
