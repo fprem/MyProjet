@@ -1,0 +1,41 @@
+{
+  "id": "10042",
+  "key": "PAY-42",
+  "fields": {
+    "summary": "Pagamento con carta salvata",
+    "issuetype": {"name": "Story"},
+    "status": {"name": "Done", "statusCategory": {"key": "done"}},
+    "priority": {"name": "High"},
+    "created": "2026-01-02T09:00:00.000+0100",
+    "updated": "2026-01-14T17:30:00.000+0100",
+    "customfield_10016": 5.0,
+    "customfield_10020": [
+      {"id": 10, "name": "PAY Sprint 10", "state": "closed", "boardId": 3,
+       "startDate": "2026-01-05T08:00:00.000Z", "endDate": "2026-01-19T08:00:00.000Z",
+       "completeDate": "2026-01-19T09:15:00.000Z"},
+      {"id": 11, "name": "PAY Sprint 11", "state": "active", "boardId": 3,
+       "startDate": "2026-01-19T10:00:00.000Z", "endDate": "2026-02-02T08:00:00.000Z"}
+    ]
+  },
+  "changelog": {
+    "startAt": 0,
+    "maxResults": 3,
+    "total": 3,
+    "histories": [
+      {"id": "3", "created": "2026-01-14T17:30:00.000+0100",
+       "items": [{"field": "status", "fieldtype": "jira", "fieldId": "status",
+                  "from": "3", "fromString": "In Progress", "to": "10001", "toString": "Done"}]},
+      {"id": "1", "created": "2026-01-03T10:00:00.000+0100",
+       "items": [{"field": "Sprint", "fieldtype": "custom", "fieldId": "customfield_10020",
+                  "from": null, "fromString": null, "to": "10", "toString": "PAY Sprint 10"},
+                 {"field": "assignee", "fieldtype": "jira", "fieldId": "assignee",
+                  "from": null, "fromString": null, "to": "abc", "toString": "Dev"}]},
+      {"id": "2", "created": "2026-01-06T11:00:00.000+0100",
+       "items": [{"field": "status", "fieldtype": "jira", "fieldId": "status",
+                  "from": "10000", "fromString": "To Do", "to": "3", "toString": "In Progress"},
+                 {"field": "Sprint", "fieldtype": "custom", "fieldId": "customfield_10020",
+                  "from": "10", "fromString": "PAY Sprint 10", "to": "10, 11",
+                  "toString": "PAY Sprint 10, PAY Sprint 11"}]}
+    ]
+  }
+}
