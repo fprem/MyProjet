@@ -52,3 +52,19 @@ def test_draft_reads_stdin_when_path_is_dash(monkeypatch, capsys):
     code, out = run(["draft", "-", "--client", "Acme", "--pm", "F", "--date", "2026-10-14"], capsys)
     assert code == 0
     assert "Website redesign" in out
+
+
+def test_draft_with_ai_flag_falls_back_with_notice_when_ai_fails(tmp_path, capsys, monkeypatch):
+    from recap import ai_extractor
+
+    def boom(text, call_date, client=None):
+        raise ai_extractor.AIDraftingError("AI drafting failed: no key.")
+
+    monkeypatch.setattr("recap.drafting.extract_with_ai", boom)
+    notes = tmp_path / "notes.txt"
+    notes.write_text(NOTES)
+    code = main(["draft", str(notes), "--client", "Acme", "--pm", "F", "--date", "2026-10-14", "--ai"])
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "no key" in captured.err
+    assert "- Maria: send brand feedback" in captured.out

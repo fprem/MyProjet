@@ -15,10 +15,10 @@ def make_client(tmp_path):
     return _make
 
 
-def draft(client, **overrides):
+def draft(http, **overrides):
     form = {"notes": NOTES, "client": "Acme", "pm": "Fabrizio", "date": "2026-10-14"}
     form.update(overrides)
-    return client.post("/draft", data=form)
+    return http.post("/draft", data=form)
 
 
 def test_home_page_shows_the_notes_form(make_client):

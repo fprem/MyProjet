@@ -11,7 +11,28 @@ draft that the PM edits and sends from their own email.
 pip install -e ".[dev]"
 ```
 
-## Write notes
+## Web page
+
+```bash
+recap-web            # then open http://127.0.0.1:5000
+```
+
+Paste your notes, fill in client and your name, and get the recap email to
+edit and copy. The commitments go to the **Open commitments** page, where you
+can filter by client and mark items done.
+
+## AI drafting
+
+Tick **Use AI drafting** on the web page (or pass `--ai` to `recap draft`) to
+paste free-form notes or a transcript. Claude (`claude-opus-5-5`) reads the
+notes and returns agreements, decisions and commitments as structured data,
+resolving dates like "Friday" against the call date; the email is still built
+from the same template, and it is never sent for you.
+
+Set `ANTHROPIC_API_KEY` first. If the key is missing or the call fails, the app
+says so and falls back to the prefix rules below.
+
+## Write notes (without AI)
 
 Plain text, one item per line. The first line without a prefix is the title.
 
@@ -29,6 +50,7 @@ Commitments read as `<owner> to|will <task> [by YYYY-MM-DD]`.
 
 ```bash
 recap draft examples/acme-call.txt --client Acme --pm Fabrizio --save
+recap draft my-notes.txt --client Acme --pm Fabrizio --ai
 recap open --client Acme
 recap done 1
 ```

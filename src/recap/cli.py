@@ -6,7 +6,7 @@ import argparse
 import sys
 from datetime import date
 
-from recap.notes_parser import parse_notes
+from recap.drafting import build_meeting
 from recap.recap_email import draft_recap
 from recap.store import CommitmentStore
 
@@ -22,6 +22,7 @@ def _build_parser() -> argparse.ArgumentParser:
     draft.add_argument("--pm", required=True, help="your name, used to sign the email")
     draft.add_argument("--date", type=date.fromisoformat, default=None, help="call date, YYYY-MM-DD (default: today)")
     draft.add_argument("--save", action="store_true", help="record the commitments as open")
+    draft.add_argument("--ai", action="store_true", help="extract items from free-form notes with Claude")
 
     open_ = sub.add_parser("open", help="list open commitments")
     open_.add_argument("--client")
@@ -37,8 +38,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "draft":
         text = sys.stdin.read() if args.notes == "-" else open(args.notes, encoding="utf-8").read()
-        meeting = parse_notes(text)
         call_date = args.date or date.today()
+        meeting, notice = build_meeting(text, call_date=call_date, use_ai=args.ai)
+        if notice:
+            print(notice, file=sys.stderr)
         print(draft_recap(meeting, client=args.client, pm_name=args.pm, call_date=call_date).as_text())
         if args.save:
             store.add(args.client, meeting.commitments, call_date=call_date)
