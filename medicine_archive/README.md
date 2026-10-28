@@ -59,4 +59,6 @@ flutter analyze
 - `lib/data/`: models, `ArchiveRepository`, `EncryptedFileStore`, key storage
 - `lib/scan/`: `LabelParser`, `PhotoScanner`, ML Kit reader
 - `lib/ui/`: profiles list, profile (medicines) screen, medicine form
-- `design/`: the design brief (Dieter Rams principles) the UI follows
+- `lib/ui/brand.dart`: colours, fonts, logo, quantity pill and scan animation
+- `design/`: the design brief, accessibility review, logo (`design/logo/logo.svg`)
+  and screenshots of the screens

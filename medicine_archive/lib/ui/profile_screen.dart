@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app.dart';
 import '../data/archive_repository.dart';
 import '../scan/photo_scanner.dart';
+import 'brand.dart';
 import 'empty_state.dart';
 import 'medicine_form_screen.dart';
 
@@ -103,86 +104,162 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.profile.name),
-        actions: [
-          IconButton(
-            tooltip: 'Add by hand',
-            icon: const Icon(Icons.edit_note),
-            onPressed: () => _openForm(title: 'Add medicine'),
-          ),
-          PopupMenuButton<void>(
-            tooltip: 'More options',
-            itemBuilder: (_) => [
-              PopupMenuItem(onTap: _deleteProfile, child: const Text('Delete profile')),
-            ],
-          ),
-        ],
-      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _reading
           ? null
           : FloatingActionButton.extended(
               heroTag: null,
               onPressed: _scan,
-              icon: const Icon(Icons.photo_camera_outlined),
+              icon: const Icon(Icons.document_scanner_outlined),
               label: const Text('Scan box'),
             ),
-      body: _reading
-          ? Center(
-              child: Semantics(
-                liveRegion: true,
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Reading the label…'),
-                  ],
-                ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar.large(
+            title: Text(widget.profile.name),
+            actions: [
+              IconButton(
+                tooltip: 'Add by hand',
+                icon: const Icon(Icons.edit_note_rounded),
+                onPressed: _reading ? null : () => _openForm(title: 'Add medicine'),
               ),
-            )
-          : ListenableBuilder(
+              PopupMenuButton<void>(
+                tooltip: 'More options',
+                itemBuilder: (_) => [
+                  PopupMenuItem(onTap: _deleteProfile, child: const Text('Delete profile')),
+                ],
+              ),
+            ],
+          ),
+          if (_reading)
+            const SliverFillRemaining(hasScrollBody: false, child: _Reading())
+          else
+            ListenableBuilder(
               listenable: _repo,
               builder: (context, _) {
                 final medicines = _repo.medicinesOf(widget.profile.id);
                 if (medicines.isEmpty) {
-                  return const EmptyState(
-                    icon: Icons.medication_outlined,
-                    title: 'No medicines yet',
-                    message:
-                        'Tap Scan box to photograph a medicine package. '
-                        'Only the name and quantity are kept, encrypted on this phone.',
+                  return const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: EmptyState(
+                      title: 'No medicines yet',
+                      message:
+                          'Tap Scan box to photograph a medicine package. '
+                          'Only the name and quantity are kept, encrypted on this phone.',
+                    ),
                   );
                 }
-                return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 88),
-                  itemCount: medicines.length,
-                  itemBuilder: (context, i) {
-                    final medicine = medicines[i];
-                    return ListTile(
-                      leading: const Icon(Icons.medication_outlined),
-                      title: Text(medicine.name),
-                      subtitle: Text(medicine.quantityLabel),
-                      onTap: () => _openForm(
-                        title: 'Edit medicine',
-                        editing: medicine,
-                        initial: LabelResult(
-                          name: medicine.name,
-                          quantity: medicine.quantity,
-                          unit: medicine.unit,
+                final count = medicines.length;
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+                  sliver: SliverList.list(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+                        child: Text(
+                          count == 1 ? '1 medicine' : '$count medicines',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            letterSpacing: 0.4,
+                          ),
                         ),
                       ),
-                      trailing: IconButton(
-                        tooltip: 'Delete ${medicine.name}',
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () => _deleteMedicine(medicine),
-                      ),
-                    );
-                  },
+                      for (final medicine in medicines) ...[
+                        _MedicineCard(
+                          medicine: medicine,
+                          onTap: () => _openForm(
+                            title: 'Edit medicine',
+                            editing: medicine,
+                            initial: LabelResult(
+                              name: medicine.name,
+                              quantity: medicine.quantity,
+                              unit: medicine.unit,
+                            ),
+                          ),
+                          onDelete: () => _deleteMedicine(medicine),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ],
+                  ),
                 );
               },
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MedicineCard extends StatelessWidget {
+  const _MedicineCard({required this.medicine, required this.onTap, required this.onDelete});
+
+  final Medicine medicine;
+  final VoidCallback onTap;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: ListTile(
+        minTileHeight: 84,
+        onTap: onTap,
+        leading: ExcludeSemantics(
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerHighest,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.medication_rounded, color: scheme.primary),
+          ),
+        ),
+        title: Text(medicine.name),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: QuantityPill(medicine.quantityLabel),
+          ),
+        ),
+        trailing: IconButton(
+          tooltip: 'Delete ${medicine.name}',
+          icon: Icon(Icons.delete_outline_rounded, color: scheme.onSurfaceVariant),
+          onPressed: onDelete,
+        ),
+      ),
+    );
+  }
+}
+
+class _Reading extends StatelessWidget {
+  const _Reading();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 80),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const ScanFrame(),
+          const SizedBox(height: 28),
+          Semantics(
+            liveRegion: true,
+            child: Text('Reading the label…', style: theme.textTheme.titleLarge),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'This happens on your phone.',
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -58,26 +58,37 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           if (widget.notice.isNotEmpty) ...[
-            Card.filled(
-              color: theme.colorScheme.secondaryContainer,
+            Card(
+              color: scheme.primaryContainer,
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final line in widget.notice)
-                      Text(
-                        line,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSecondaryContainer,
-                        ),
+                    Icon(Icons.verified_user_outlined, color: scheme.onPrimaryContainer),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 4,
+                        children: [
+                          for (final line in widget.notice)
+                            Text(
+                              line,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: scheme.onPrimaryContainer,
+                              ),
+                            ),
+                        ],
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -87,10 +98,10 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
           TextField(
             controller: _name,
             textCapitalization: TextCapitalization.sentences,
+            style: theme.textTheme.titleMedium,
             decoration: InputDecoration(
               labelText: 'Name',
               helperText: _name.text.trim().isEmpty ? 'Required' : null,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -103,34 +114,42 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
                   controller: _quantity,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  style: theme.textTheme.titleMedium,
                   decoration: InputDecoration(
                     labelText: 'Quantity',
                     helperText: _parsedQuantity == null ? 'Required' : null,
-                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: TextField(
                   controller: _unit,
+                  style: theme.textTheme.titleMedium,
                   decoration: const InputDecoration(
                     labelText: 'Unit (optional)',
                     hintText: 'compresse, ml…',
-                    border: OutlineInputBorder(),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           FilledButton(onPressed: _canSave ? _save : null, child: const Text('Save')),
           const SizedBox(height: 16),
-          Text(
-            'Saved encrypted on this phone only.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            spacing: 6,
+            children: [
+              Icon(Icons.lock_outline_rounded, size: 16, color: scheme.onSurfaceVariant),
+              Flexible(
+                child: Text(
+                  'Saved encrypted on this phone only.',
+                  style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+              ),
+            ],
           ),
         ],
       ),

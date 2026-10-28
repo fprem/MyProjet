@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-class EmptyState extends StatelessWidget {
-  const EmptyState({super.key, required this.icon, required this.title, required this.message});
+import 'brand.dart';
 
-  final IconData icon;
+class EmptyState extends StatelessWidget {
+  const EmptyState({super.key, required this.title, required this.message});
+
   final String title;
   final String message;
 
@@ -12,20 +13,25 @@ class EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(32, 24, 32, 120),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ExcludeSemantics(child: Icon(icon, size: 48, color: theme.colorScheme.primary)),
-            const SizedBox(height: 16),
-            Text(title, style: theme.textTheme.titleLarge),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: const LogoMark(size: 72),
+            ),
+            const SizedBox(height: 24),
+            Text(title, style: theme.textTheme.headlineSmall, textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -43,7 +49,11 @@ Future<bool> confirmDelete(BuildContext context, String question) async {
       content: const Text("This can't be undone."),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+        FilledButton(
+          style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Delete'),
+        ),
       ],
     ),
   );

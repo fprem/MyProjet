@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'data/archive_repository.dart';
 import 'scan/photo_scanner.dart';
+import 'ui/brand.dart';
 import 'ui/profiles_screen.dart';
 
 /// Takes a photo and returns its file path, or null if the person cancelled.
@@ -21,16 +22,14 @@ class MedicineArchiveApp extends StatelessWidget {
   final TakePhoto takePhoto;
   final ThemeMode themeMode;
 
-  static const _seed = Color(0xFF00696B);
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Medicine Archive',
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
-      theme: ThemeData(colorSchemeSeed: _seed, useMaterial3: true),
-      darkTheme: ThemeData(colorSchemeSeed: _seed, brightness: Brightness.dark, useMaterial3: true),
+      theme: Brand.lightTheme(),
+      darkTheme: Brand.darkTheme(),
       home: ProfilesScreen(repository: repository, scanner: scanner, takePhoto: takePhoto),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app.dart';
 import '../data/archive_repository.dart';
 import '../scan/photo_scanner.dart';
+import 'brand.dart';
 import 'empty_state.dart';
 import 'profile_screen.dart';
 
@@ -26,55 +27,120 @@ class ProfilesScreen extends StatelessWidget {
     if (name != null) await repository.createProfile(name);
   }
 
+  void _open(BuildContext context, Profile profile) => Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ProfileScreen(
+        repository: repository,
+        profile: profile,
+        scanner: scanner,
+        takePhoto: takePhoto,
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Medicine Archive')),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
         onPressed: () => _createProfile(context),
-        icon: const Icon(Icons.person_add_alt_1),
+        icon: const Icon(Icons.person_add_alt_1_rounded),
         label: const Text('New profile'),
       ),
       body: ListenableBuilder(
         listenable: repository,
         builder: (context, _) {
           final profiles = repository.profiles;
-          if (profiles.isEmpty) {
-            return const EmptyState(
-              icon: Icons.people_outline,
-              title: 'No profiles yet',
-              message: 'Create a profile for each person whose medicines you keep.',
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 88),
-            itemCount: profiles.length,
-            itemBuilder: (context, i) {
-              final profile = profiles[i];
-              final count = repository.medicinesOf(profile.id).length;
-              return ListTile(
-                leading: ExcludeSemantics(
-                  child: CircleAvatar(child: Text(profile.name.characters.first.toUpperCase())),
+          return CustomScrollView(
+            slivers: [
+              SliverAppBar.large(
+                title: const Row(
+                  spacing: 12,
+                  children: [LogoMark(size: 36), Text('Medicine Archive')],
                 ),
-                title: Text(profile.name),
-                subtitle: Text(count == 1 ? '1 medicine' : '$count medicines'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ProfileScreen(
-                      repository: repository,
-                      profile: profile,
-                      scanner: scanner,
-                      takePhoto: takePhoto,
+              ),
+              if (profiles.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: EmptyState(
+                    title: 'No profiles yet',
+                    message: 'Create a profile for each person whose medicines you keep.',
+                  ),
+                )
+              else ...[
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  sliver: SliverToBoxAdapter(
+                    child: Text(
+                      'Profiles',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        letterSpacing: 0.4,
+                      ),
                     ),
                   ),
                 ),
-              );
-            },
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+                  sliver: SliverList.separated(
+                    itemCount: profiles.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) {
+                      final profile = profiles[i];
+                      final count = repository.medicinesOf(profile.id).length;
+                      return _ProfileCard(
+                        profile: profile,
+                        count: count,
+                        onTap: () => _open(context, profile),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _ProfileCard extends StatelessWidget {
+  const _ProfileCard({required this.profile, required this.count, required this.onTap});
+
+  final Profile profile;
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Card(
+      child: ListTile(
+        minTileHeight: 80,
+        onTap: onTap,
+        leading: ExcludeSemantics(
+          child: Container(
+            width: 52,
+            height: 52,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              profile.name.characters.first.toUpperCase(),
+              style: theme.textTheme.titleLarge?.copyWith(color: scheme.onPrimaryContainer),
+            ),
+          ),
+        ),
+        title: Text(profile.name, style: theme.textTheme.titleLarge),
+        subtitle: Text(count == 1 ? '1 medicine' : '$count medicines'),
+        trailing: Icon(Icons.arrow_forward_rounded, color: scheme.onSurfaceVariant),
       ),
     );
   }
@@ -115,6 +181,7 @@ class _NewProfileDialogState extends State<_NewProfileDialog> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
         FilledButton(
+          style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
           onPressed: _name.text.trim().isEmpty ? null : _submit,
           child: const Text('Create'),
         ),
