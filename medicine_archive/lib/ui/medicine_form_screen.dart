@@ -125,7 +125,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
             decoration: const InputDecoration(
               labelText: 'Strength (optional)',
               hintText: 'e.g. 500 mg',
-              helperText: 'The same medicine can come as 0,5 mg, 1 mg, 2 mg…',
+              helperText: 'Check it: 0,5 mg and 1 mg are different',
             ),
           ),
           const SizedBox(height: 16),
