@@ -4,8 +4,8 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
@@ -16,8 +16,8 @@ jobs:
       run:
         working-directory: medicine_archive
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -29,7 +29,7 @@ jobs:
       - run: flutter analyze
       - run: flutter test
       - run: flutter build apk --debug
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: medicine-archive-debug-apk
           path: medicine_archive/build/app/outputs/flutter-apk/app-debug.apk
