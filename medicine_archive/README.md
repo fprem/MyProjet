@@ -30,6 +30,16 @@ flutter run            # with an Android phone or emulator connected
 Needs Android 6.0 (API 23) or newer. Each CI run also builds a debug APK
 you can download from the run's artifacts (`medicine-archive-debug-apk`).
 
+## Browser preview
+
+`lib/demo/demo_main.dart` runs the same screens in a browser, with the
+camera, ML Kit and the encrypted file stood in for (sample boxes go through
+the real `LabelParser`; data stays in memory):
+
+```bash
+flutter run -d chrome -t lib/demo/demo_main.dart
+```
+
 ## Develop (TDD)
 
 Tests were written before the code, in `test/`:
