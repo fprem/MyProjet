@@ -131,8 +131,10 @@ void main() {
       bytes[bytes.length - 1] ^= 0xFF;
       await file.writeAsBytes(bytes);
 
-      expect(() => EncryptedFileStore(file: file, keys: keys).read(),
-          throwsA(isA<ArchiveDecryptionException>()));
+      expect(
+        () => EncryptedFileStore(file: file, keys: keys).read(),
+        throwsA(isA<ArchiveDecryptionException>()),
+      );
     });
 
     test('each save uses a fresh nonce', () async {

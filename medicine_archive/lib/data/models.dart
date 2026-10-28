@@ -32,26 +32,26 @@ class Medicine {
   String get quantityLabel => unit.isEmpty ? '$quantity' : '$quantity $unit';
 
   Medicine copyWith({String? name, int? quantity, String? unit}) => Medicine(
-        id: id,
-        profileId: profileId,
-        name: name ?? this.name,
-        quantity: quantity ?? this.quantity,
-        unit: unit ?? this.unit,
-      );
+    id: id,
+    profileId: profileId,
+    name: name ?? this.name,
+    quantity: quantity ?? this.quantity,
+    unit: unit ?? this.unit,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'profileId': profileId,
-        'name': name,
-        'quantity': quantity,
-        'unit': unit,
-      };
+    'id': id,
+    'profileId': profileId,
+    'name': name,
+    'quantity': quantity,
+    'unit': unit,
+  };
 
   factory Medicine.fromJson(Map<String, dynamic> json) => Medicine(
-        id: json['id'] as String,
-        profileId: json['profileId'] as String,
-        name: json['name'] as String,
-        quantity: json['quantity'] as int,
-        unit: json['unit'] as String? ?? '',
-      );
+    id: json['id'] as String,
+    profileId: json['profileId'] as String,
+    name: json['name'] as String,
+    quantity: json['quantity'] as int,
+    unit: json['unit'] as String? ?? '',
+  );
 }

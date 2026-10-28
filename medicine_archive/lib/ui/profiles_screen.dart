@@ -31,6 +31,7 @@ class ProfilesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Medicine Archive')),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => _createProfile(context),
         icon: const Icon(Icons.person_add_alt_1),
         label: const Text('New profile'),
@@ -53,7 +54,9 @@ class ProfilesScreen extends StatelessWidget {
               final profile = profiles[i];
               final count = repository.medicinesOf(profile.id).length;
               return ListTile(
-                leading: CircleAvatar(child: Text(profile.name.characters.first.toUpperCase())),
+                leading: ExcludeSemantics(
+                  child: CircleAvatar(child: Text(profile.name.characters.first.toUpperCase())),
+                ),
                 title: Text(profile.name),
                 subtitle: Text(count == 1 ? '1 medicine' : '$count medicines'),
                 trailing: const Icon(Icons.chevron_right),

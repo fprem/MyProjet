@@ -30,14 +30,13 @@ class LabelParser {
       r'pills?|bustine|bustina|sachets?|supposte|supposta|fiale|fiala|ampoules?|'
       r'cerotti|patches|confetti|pastiglie|gocce|ml';
 
-  static final _numberThenUnit =
-      RegExp('(\\d+)\\s*($_units)\\b', caseSensitive: false);
-  static final _unitThenNumber =
-      RegExp('\\b($_units)\\.?\\s*x\\s*(\\d+)\\b', caseSensitive: false);
+  static final _numberThenUnit = RegExp('(\\d+)\\s*($_units)\\b', caseSensitive: false);
+  static final _unitThenNumber = RegExp('\\b($_units)\\.?\\s*x\\s*(\\d+)\\b', caseSensitive: false);
   static final _xThenNumber = RegExp(r'\bx\s*(\d+)\b', caseSensitive: false);
   static final _dosage = RegExp(
-      r'^\d+(?:[.,]\d+)?\s*(?:mg|g|mcg|µg|ug|ui|iu|%|mg/ml)(?:\s*/\s*\d+\s*(?:mg|ml))?$',
-      caseSensitive: false);
+    r'^\d+(?:[.,]\d+)?\s*(?:mg|g|mcg|µg|ug|ui|iu|%|mg/ml)(?:\s*/\s*\d+\s*(?:mg|ml))?$',
+    caseSensitive: false,
+  );
   static final _letters = RegExp(r'[A-Za-zÀ-ÿ]');
 
   LabelResult parse(List<LabelLine> lines) {
@@ -57,13 +56,16 @@ class LabelParser {
     }
 
     final dosage = cleaned.where((l) => _dosage.hasMatch(l.text)).firstOrNull;
-    final candidates = cleaned
-        .where((l) =>
-            _letters.allMatches(l.text).length >= 2 &&
-            !_dosage.hasMatch(l.text) &&
-            _quantityIn(l.text) == null)
-        .toList()
-      ..sort((a, b) => b.height.compareTo(a.height));
+    final candidates =
+        cleaned
+            .where(
+              (l) =>
+                  _letters.allMatches(l.text).length >= 2 &&
+                  !_dosage.hasMatch(l.text) &&
+                  _quantityIn(l.text) == null,
+            )
+            .toList()
+          ..sort((a, b) => b.height.compareTo(a.height));
 
     var name = candidates.isEmpty ? '' : _tidy(candidates.first.text);
     if (name.isNotEmpty && dosage != null) name = '$name ${dosage.text.toLowerCase()}';

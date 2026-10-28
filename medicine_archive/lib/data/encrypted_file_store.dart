@@ -54,10 +54,7 @@ class EncryptedFileStore implements ArchiveStore {
 
   @override
   Future<void> write(Map<String, dynamic> json) async {
-    final box = await _cipher.encrypt(
-      utf8.encode(jsonEncode(json)),
-      secretKey: await _secretKey(),
-    );
+    final box = await _cipher.encrypt(utf8.encode(jsonEncode(json)), secretKey: await _secretKey());
     // Write to a temporary file first so a crash never leaves half an archive.
     final tmp = File('${file.path}.tmp');
     await tmp.writeAsBytes([_version, ...box.concatenation()], flush: true);

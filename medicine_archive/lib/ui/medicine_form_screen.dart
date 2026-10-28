@@ -33,8 +33,7 @@ class MedicineFormScreen extends StatefulWidget {
 
 class _MedicineFormScreenState extends State<MedicineFormScreen> {
   late final _name = TextEditingController(text: widget.initial.name);
-  late final _quantity =
-      TextEditingController(text: widget.initial.quantity?.toString() ?? '');
+  late final _quantity = TextEditingController(text: widget.initial.quantity?.toString() ?? '');
   late final _unit = TextEditingController(text: widget.initial.unit);
 
   @override
@@ -73,9 +72,12 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     for (final line in widget.notice)
-                      Text(line,
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(color: theme.colorScheme.onSecondaryContainer)),
+                      Text(
+                        line,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSecondaryContainer,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -85,7 +87,11 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
           TextField(
             controller: _name,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+            decoration: InputDecoration(
+              labelText: 'Name',
+              helperText: _name.text.trim().isEmpty ? 'Required' : null,
+              border: const OutlineInputBorder(),
+            ),
             onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 16),
@@ -97,8 +103,11 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
                   controller: _quantity,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration:
-                      const InputDecoration(labelText: 'Quantity', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Quantity',
+                    helperText: _parsedQuantity == null ? 'Required' : null,
+                    border: const OutlineInputBorder(),
+                  ),
                   onChanged: (_) => setState(() {}),
                 ),
               ),

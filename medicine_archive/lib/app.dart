@@ -13,11 +13,13 @@ class MedicineArchiveApp extends StatelessWidget {
     required this.repository,
     required this.scanner,
     required this.takePhoto,
+    this.themeMode = ThemeMode.system,
   });
 
   final ArchiveRepository repository;
   final MedicineScanner scanner;
   final TakePhoto takePhoto;
+  final ThemeMode themeMode;
 
   static const _seed = Color(0xFF00696B);
 
@@ -26,17 +28,10 @@ class MedicineArchiveApp extends StatelessWidget {
     return MaterialApp(
       title: 'Medicine Archive',
       debugShowCheckedModeBanner: false,
+      themeMode: themeMode,
       theme: ThemeData(colorSchemeSeed: _seed, useMaterial3: true),
-      darkTheme: ThemeData(
-        colorSchemeSeed: _seed,
-        brightness: Brightness.dark,
-        useMaterial3: true,
-      ),
-      home: ProfilesScreen(
-        repository: repository,
-        scanner: scanner,
-        takePhoto: takePhoto,
-      ),
+      darkTheme: ThemeData(colorSchemeSeed: _seed, brightness: Brightness.dark, useMaterial3: true),
+      home: ProfilesScreen(repository: repository, scanner: scanner, takePhoto: takePhoto),
     );
   }
 }

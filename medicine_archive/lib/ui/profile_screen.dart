@@ -70,14 +70,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     if (draft == null) return;
     if (editing == null) {
-      await _repo.addMedicine(widget.profile.id,
-          name: draft.name, quantity: draft.quantity, unit: draft.unit);
+      await _repo.addMedicine(
+        widget.profile.id,
+        name: draft.name,
+        quantity: draft.quantity,
+        unit: draft.unit,
+      );
     } else {
       await _repo.updateMedicine(
-          editing.copyWith(name: draft.name, quantity: draft.quantity, unit: draft.unit));
+        editing.copyWith(name: draft.name, quantity: draft.quantity, unit: draft.unit),
+      );
     }
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${draft.name.trim()} saved')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${draft.name.trim()} saved')));
   }
 
   Future<void> _deleteMedicine(Medicine medicine) async {
@@ -106,6 +113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () => _openForm(title: 'Add medicine'),
           ),
           PopupMenuButton<void>(
+            tooltip: 'More options',
             itemBuilder: (_) => [
               PopupMenuItem(onTap: _deleteProfile, child: const Text('Delete profile')),
             ],
@@ -115,19 +123,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       floatingActionButton: _reading
           ? null
           : FloatingActionButton.extended(
+              heroTag: null,
               onPressed: _scan,
               icon: const Icon(Icons.photo_camera_outlined),
               label: const Text('Scan box'),
             ),
       body: _reading
-          ? const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Reading the label…'),
-                ],
+          ? Center(
+              child: Semantics(
+                liveRegion: true,
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Reading the label…'),
+                  ],
+                ),
               ),
             )
           : ListenableBuilder(
@@ -138,7 +150,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return const EmptyState(
                     icon: Icons.medication_outlined,
                     title: 'No medicines yet',
-                    message: 'Tap Scan box to photograph a medicine package. '
+                    message:
+                        'Tap Scan box to photograph a medicine package. '
                         'Only the name and quantity are kept, encrypted on this phone.',
                   );
                 }
@@ -155,7 +168,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Edit medicine',
                         editing: medicine,
                         initial: LabelResult(
-                            name: medicine.name, quantity: medicine.quantity, unit: medicine.unit),
+                          name: medicine.name,
+                          quantity: medicine.quantity,
+                          unit: medicine.unit,
+                        ),
                       ),
                       trailing: IconButton(
                         tooltip: 'Delete ${medicine.name}',

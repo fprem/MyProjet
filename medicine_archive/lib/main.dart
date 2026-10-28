@@ -29,14 +29,16 @@ Future<void> main() async {
   }
 
   final picker = ImagePicker();
-  runApp(MedicineArchiveApp(
-    repository: repository,
-    scanner: PhotoScanner(reader: MlKitLabelReader()),
-    takePhoto: () async {
-      final photo = await picker.pickImage(source: ImageSource.camera, maxWidth: 2000);
-      return photo?.path;
-    },
-  ));
+  runApp(
+    MedicineArchiveApp(
+      repository: repository,
+      scanner: PhotoScanner(reader: MlKitLabelReader()),
+      takePhoto: () async {
+        final photo = await picker.pickImage(source: ImageSource.camera, maxWidth: 2000);
+        return photo?.path;
+      },
+    ),
+  );
 }
 
 class _ErrorApp extends StatelessWidget {
@@ -45,6 +47,10 @@ class _ErrorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        home: Scaffold(body: Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(message)))),
-      );
+    home: Scaffold(
+      body: Center(
+        child: Padding(padding: const EdgeInsets.all(24), child: Text(message)),
+      ),
+    ),
+  );
 }

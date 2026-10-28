@@ -17,7 +17,7 @@ List<int> _randomKey() {
 /// created on first use and never leaves the device.
 class SecureStorageKeyProvider implements KeyProvider {
   SecureStorageKeyProvider([FlutterSecureStorage? storage])
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   static const _keyName = 'archive_key_v1';
   final FlutterSecureStorage _storage;

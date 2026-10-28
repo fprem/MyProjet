@@ -19,23 +19,26 @@ class ArchiveRepository extends ChangeNotifier {
     final repo = ArchiveRepository._(store);
     final json = await store.read();
     if (json != null) {
-      repo._profiles.addAll((json['profiles'] as List)
-          .map((p) => Profile.fromJson(p as Map<String, dynamic>)));
-      repo._medicines.addAll((json['medicines'] as List)
-          .map((m) => Medicine.fromJson(m as Map<String, dynamic>)));
+      repo._profiles.addAll(
+        (json['profiles'] as List).map((p) => Profile.fromJson(p as Map<String, dynamic>)),
+      );
+      repo._medicines.addAll(
+        (json['medicines'] as List).map((m) => Medicine.fromJson(m as Map<String, dynamic>)),
+      );
     }
     return repo;
   }
 
   /// All profiles, sorted by name.
   List<Profile> get profiles => List.unmodifiable(
-      [..._profiles]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())));
+    [..._profiles]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())),
+  );
 
   /// The medicines of one profile, sorted by name.
-  List<Medicine> medicinesOf(String profileId) => List.unmodifiable(_medicines
-      .where((m) => m.profileId == profileId)
-      .toList()
-    ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())));
+  List<Medicine> medicinesOf(String profileId) => List.unmodifiable(
+    _medicines.where((m) => m.profileId == profileId).toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())),
+  );
 
   Future<Profile> createProfile(String name) async {
     final profile = Profile(id: _newId(), name: _requireName(name));
@@ -59,13 +62,9 @@ class ArchiveRepository extends ChangeNotifier {
     if (!_profiles.any((p) => p.id == profileId)) {
       throw ArgumentError.value(profileId, 'profileId', 'No such profile');
     }
-    final medicine = _validate(Medicine(
-      id: _newId(),
-      profileId: profileId,
-      name: name,
-      quantity: quantity,
-      unit: unit,
-    ));
+    final medicine = _validate(
+      Medicine(id: _newId(), profileId: profileId, name: name, quantity: quantity, unit: unit),
+    );
     _medicines.add(medicine);
     await _save();
     return medicine;

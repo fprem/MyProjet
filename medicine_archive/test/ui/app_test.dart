@@ -16,11 +16,13 @@ void main() {
     FakeScanner? scanner,
     Future<String?> Function()? takePhoto,
   }) async {
-    await tester.pumpWidget(MedicineArchiveApp(
-      repository: repo,
-      scanner: scanner ?? FakeScanner(const LabelResult.empty()),
-      takePhoto: takePhoto ?? () async => '/tmp/photo.jpg',
-    ));
+    await tester.pumpWidget(
+      MedicineArchiveApp(
+        repository: repo,
+        scanner: scanner ?? FakeScanner(const LabelResult.empty()),
+        takePhoto: takePhoto ?? () async => '/tmp/photo.jpg',
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -74,7 +76,9 @@ void main() {
     });
 
     testWidgets('scans a box, lets the user check it, and saves it', (tester) async {
-      final scanner = FakeScanner(const LabelResult(name: 'Tachipirina 500 mg', quantity: 20, unit: 'compresse'));
+      final scanner = FakeScanner(
+        const LabelResult(name: 'Tachipirina 500 mg', quantity: 20, unit: 'compresse'),
+      );
       await pumpApp(tester, scanner: scanner);
       await openProfile(tester, 'Anna');
 

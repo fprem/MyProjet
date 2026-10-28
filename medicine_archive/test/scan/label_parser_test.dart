@@ -48,10 +48,7 @@ void main() {
   });
 
   test('ignores lines that are only numbers or codes for the name', () {
-    final result = parser.parse([
-      line('034567890', 50),
-      line('Moment', 30),
-    ]);
+    final result = parser.parse([line('034567890', 50), line('Moment', 30)]);
     expect(result.name, 'Moment');
   });
 
