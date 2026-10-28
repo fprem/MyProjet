@@ -159,4 +159,60 @@ void main() {
       expect(repo.medicinesOf(anna.id), isEmpty);
     });
   });
+
+  group('strength', () {
+    testWidgets('a scanned strength is shown for checking, then kept and listed', (tester) async {
+      final scanner = FakeScanner(const LabelResult(
+          name: 'Delorazepam ratiopharm Italia', strength: '0,5 mg', quantity: 20, unit: 'compresse'));
+      await pumpApp(tester, scanner: scanner);
+      await openProfile(tester, 'Anna');
+      await tester.tap(find.text('Scan box'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(TextField, '0,5 mg'), findsOneWidget);
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(repo.medicinesOf(repo.profiles.single.id).single.strength, '0,5 mg');
+      expect(find.text('Delorazepam ratiopharm Italia'), findsOneWidget);
+      expect(find.text('0,5 mg'), findsOneWidget);
+      expect(find.text('20 compresse'), findsOneWidget);
+    });
+
+    testWidgets('the strength can be typed in or corrected', (tester) async {
+      await pumpApp(tester);
+      await openProfile(tester, 'Anna');
+      await tester.tap(find.byTooltip('Add by hand'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Delorazepam');
+      await tester.enterText(find.widgetWithText(TextField, 'Strength (optional)'), '1 mg');
+      await tester.enterText(find.widgetWithText(TextField, 'Quantity'), '20');
+      await tester.pump();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(repo.medicinesOf(repo.profiles.single.id).single.strength, '1 mg');
+    });
+
+    testWidgets('editing a medicine shows its strength', (tester) async {
+      final anna = await repo.createProfile('Anna');
+      await repo.addMedicine(anna.id, name: 'Delorazepam', strength: '0,5 mg', quantity: 20);
+      await pumpApp(tester);
+      await tester.tap(find.text('Anna'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delorazepam'));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(TextField, '0,5 mg'), findsOneWidget);
+    });
+
+    testWidgets('two strengths of the same medicine are told apart in the list', (tester) async {
+      final anna = await repo.createProfile('Anna');
+      await repo.addMedicine(anna.id, name: 'Delorazepam', strength: '0,5 mg', quantity: 20);
+      await repo.addMedicine(anna.id, name: 'Delorazepam', strength: '1 mg', quantity: 30);
+      await pumpApp(tester);
+      await tester.tap(find.text('Anna'));
+      await tester.pumpAndSettle();
+      expect(find.text('0,5 mg'), findsOneWidget);
+      expect(find.text('1 mg'), findsOneWidget);
+    });
+  });
 }

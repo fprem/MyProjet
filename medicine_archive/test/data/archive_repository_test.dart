@@ -146,4 +146,43 @@ void main() {
       expect(first, isNot(equals(second)));
     });
   });
+
+  group('strength', () {
+    test('is kept with the medicine and survives reopening', () async {
+      final repo = await open();
+      final anna = await repo.createProfile('Anna');
+      await repo.addMedicine(anna.id,
+          name: 'Delorazepam', strength: ' 0,5 mg ', quantity: 20, unit: 'compresse');
+      expect(repo.medicinesOf(anna.id).single.strength, '0,5 mg');
+
+      final reopened = await open();
+      expect(reopened.medicinesOf(anna.id).single.strength, '0,5 mg');
+    });
+
+    test('can be changed', () async {
+      final repo = await open();
+      final anna = await repo.createProfile('Anna');
+      final med = await repo.addMedicine(anna.id, name: 'Delorazepam', strength: '0,5 mg', quantity: 20);
+      await repo.updateMedicine(med.copyWith(strength: '1 mg'));
+      expect(repo.medicinesOf(anna.id).single.strength, '1 mg');
+    });
+
+    test('is optional, and archives saved before it existed still open', () {
+      final old = Medicine.fromJson({
+        'id': 'm1',
+        'profileId': 'p1',
+        'name': 'Aspirina',
+        'quantity': 10,
+        'unit': 'compresse',
+      });
+      expect(old.strength, isEmpty);
+    });
+
+    test('is encrypted on disk like the rest', () async {
+      final repo = await open();
+      final anna = await repo.createProfile('Anna');
+      await repo.addMedicine(anna.id, name: 'Delorazepam', strength: '0,5 mg', quantity: 20);
+      expect(latin1.decode(await file.readAsBytes()), isNot(contains('0,5 mg')));
+    });
+  });
 }
