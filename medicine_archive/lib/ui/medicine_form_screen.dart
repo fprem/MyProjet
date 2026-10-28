@@ -5,10 +5,16 @@ import '../scan/label_parser.dart';
 
 /// What the person confirmed in the form.
 class MedicineDraft {
-  const MedicineDraft({required this.name, required this.quantity, this.unit = ''});
+  const MedicineDraft({
+    required this.name,
+    required this.quantity,
+    this.unit = '',
+    this.strength = '',
+  });
   final String name;
   final int quantity;
   final String unit;
+  final String strength;
 }
 
 /// Lets the person check or type a medicine's name and quantity. Pops with a
@@ -35,12 +41,14 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
   late final _name = TextEditingController(text: widget.initial.name);
   late final _quantity = TextEditingController(text: widget.initial.quantity?.toString() ?? '');
   late final _unit = TextEditingController(text: widget.initial.unit);
+  late final _strength = TextEditingController(text: widget.initial.strength);
 
   @override
   void dispose() {
     _name.dispose();
     _quantity.dispose();
     _unit.dispose();
+    _strength.dispose();
     super.dispose();
   }
 
@@ -51,7 +59,12 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
   void _save() {
     Navigator.pop(
       context,
-      MedicineDraft(name: _name.text.trim(), quantity: _parsedQuantity!, unit: _unit.text.trim()),
+      MedicineDraft(
+        name: _name.text.trim(),
+        strength: _strength.text.trim(),
+        quantity: _parsedQuantity!,
+        unit: _unit.text.trim(),
+      ),
     );
   }
 
@@ -104,6 +117,16 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
               helperText: _name.text.trim().isEmpty ? 'Required' : null,
             ),
             onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _strength,
+            style: theme.textTheme.titleMedium,
+            decoration: const InputDecoration(
+              labelText: 'Strength (optional)',
+              hintText: 'e.g. 500 mg',
+              helperText: 'The same medicine can come as 0,5 mg, 1 mg, 2 mg…',
+            ),
           ),
           const SizedBox(height: 16),
           Row(

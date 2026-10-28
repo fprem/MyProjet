@@ -17,6 +17,7 @@ class Medicine {
     required this.name,
     required this.quantity,
     this.unit = '',
+    this.strength = '',
   });
 
   final String id;
@@ -28,15 +29,20 @@ class Medicine {
   /// Empty when unknown.
   final String unit;
 
+  /// How much drug is in each dose, as printed ("0,5 mg"). Empty when
+  /// unknown. The same medicine often comes in several strengths.
+  final String strength;
+
   /// "20 compresse", or just "20" when the unit is unknown.
   String get quantityLabel => unit.isEmpty ? '$quantity' : '$quantity $unit';
 
-  Medicine copyWith({String? name, int? quantity, String? unit}) => Medicine(
+  Medicine copyWith({String? name, int? quantity, String? unit, String? strength}) => Medicine(
     id: id,
     profileId: profileId,
     name: name ?? this.name,
     quantity: quantity ?? this.quantity,
     unit: unit ?? this.unit,
+    strength: strength ?? this.strength,
   );
 
   Map<String, dynamic> toJson() => {
@@ -45,6 +51,7 @@ class Medicine {
     'name': name,
     'quantity': quantity,
     'unit': unit,
+    'strength': strength,
   };
 
   factory Medicine.fromJson(Map<String, dynamic> json) => Medicine(
@@ -53,5 +60,6 @@ class Medicine {
     name: json['name'] as String,
     quantity: json['quantity'] as int,
     unit: json['unit'] as String? ?? '',
+    strength: json['strength'] as String? ?? '',
   );
 }

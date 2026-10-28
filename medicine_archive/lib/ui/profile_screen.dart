@@ -74,12 +74,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _repo.addMedicine(
         widget.profile.id,
         name: draft.name,
+        strength: draft.strength,
         quantity: draft.quantity,
         unit: draft.unit,
       );
     } else {
       await _repo.updateMedicine(
-        editing.copyWith(name: draft.name, quantity: draft.quantity, unit: draft.unit),
+        editing.copyWith(
+          name: draft.name,
+          strength: draft.strength,
+          quantity: draft.quantity,
+          unit: draft.unit,
+        ),
       );
     }
     if (!mounted) return;
@@ -174,6 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             editing: medicine,
                             initial: LabelResult(
                               name: medicine.name,
+                              strength: medicine.strength,
                               quantity: medicine.quantity,
                               unit: medicine.unit,
                             ),
@@ -223,7 +230,14 @@ class _MedicineCard extends StatelessWidget {
           padding: const EdgeInsets.only(top: 6),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: QuantityPill(medicine.quantityLabel),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                if (medicine.strength.isNotEmpty) StrengthTag(medicine.strength),
+                QuantityPill(medicine.quantityLabel),
+              ],
+            ),
           ),
         ),
         trailing: IconButton(

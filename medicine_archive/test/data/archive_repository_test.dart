@@ -151,8 +151,13 @@ void main() {
     test('is kept with the medicine and survives reopening', () async {
       final repo = await open();
       final anna = await repo.createProfile('Anna');
-      await repo.addMedicine(anna.id,
-          name: 'Delorazepam', strength: ' 0,5 mg ', quantity: 20, unit: 'compresse');
+      await repo.addMedicine(
+        anna.id,
+        name: 'Delorazepam',
+        strength: ' 0,5 mg ',
+        quantity: 20,
+        unit: 'compresse',
+      );
       expect(repo.medicinesOf(anna.id).single.strength, '0,5 mg');
 
       final reopened = await open();
@@ -162,7 +167,12 @@ void main() {
     test('can be changed', () async {
       final repo = await open();
       final anna = await repo.createProfile('Anna');
-      final med = await repo.addMedicine(anna.id, name: 'Delorazepam', strength: '0,5 mg', quantity: 20);
+      final med = await repo.addMedicine(
+        anna.id,
+        name: 'Delorazepam',
+        strength: '0,5 mg',
+        quantity: 20,
+      );
       await repo.updateMedicine(med.copyWith(strength: '1 mg'));
       expect(repo.medicinesOf(anna.id).single.strength, '1 mg');
     });

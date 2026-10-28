@@ -11,7 +11,8 @@ class MlKitLabelReader implements LabelReader {
     final text = await _recognizer.processImage(InputImage.fromFilePath(imagePath));
     return [
       for (final block in text.blocks)
-        for (final line in block.lines) LabelLine(line.text, line.boundingBox.height),
+        for (final line in block.lines)
+          LabelLine(line.text, line.boundingBox.height, top: line.boundingBox.top),
     ];
   }
 

@@ -58,12 +58,20 @@ class ArchiveRepository extends ChangeNotifier {
     required String name,
     required int quantity,
     String unit = '',
+    String strength = '',
   }) async {
     if (!_profiles.any((p) => p.id == profileId)) {
       throw ArgumentError.value(profileId, 'profileId', 'No such profile');
     }
     final medicine = _validate(
-      Medicine(id: _newId(), profileId: profileId, name: name, quantity: quantity, unit: unit),
+      Medicine(
+        id: _newId(),
+        profileId: profileId,
+        name: name,
+        quantity: quantity,
+        unit: unit,
+        strength: strength,
+      ),
     );
     _medicines.add(medicine);
     await _save();
@@ -92,6 +100,7 @@ class ArchiveRepository extends ChangeNotifier {
       name: _requireName(m.name),
       quantity: m.quantity,
       unit: m.unit.trim(),
+      strength: m.strength.trim(),
     );
   }
 

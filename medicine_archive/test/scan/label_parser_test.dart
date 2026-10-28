@@ -121,7 +121,10 @@ void main() {
     });
 
     test('finds the strength when it is on the same line as the name', () {
-      final result = parser.parse([line('Tachipirina 500 mg compresse', 40), line('20 compresse', 14)]);
+      final result = parser.parse([
+        line('Tachipirina 500 mg compresse', 40),
+        line('20 compresse', 14),
+      ]);
       expect(result.name, 'Tachipirina');
       expect(result.strength, '500 mg');
       expect(result.quantity, 20);
@@ -171,7 +174,13 @@ void main() {
     });
 
     test('reads it through the badge outline and spacing noise', () {
-      for (final printed in ['(20 compresse)', '|20 compresse|', '20compresse', '20 COMPRESSE', '20 Compresse.']) {
+      for (final printed in [
+        '(20 compresse)',
+        '|20 compresse|',
+        '20compresse',
+        '20 COMPRESSE',
+        '20 Compresse.',
+      ]) {
         final result = parser.parse([...box, line(printed, 30, 1295)]);
         expect(result.quantity, 20, reason: printed);
         expect(result.unit, 'compresse', reason: printed);

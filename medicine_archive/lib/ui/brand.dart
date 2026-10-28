@@ -230,6 +230,28 @@ class QuantityPill extends StatelessWidget {
   }
 }
 
+/// A medicine's strength ("0,5 mg"), outlined so it reads apart from the
+/// quantity pill.
+class StrengthTag extends StatelessWidget {
+  const StrengthTag(this.label, {super.key});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: ShapeDecoration(
+        shape: StadiumBorder(side: BorderSide(color: scheme.primary, width: 1.5)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
+      ),
+    );
+  }
+}
+
 /// A viewfinder with a line sweeping over it while the label is read. The
 /// line stands still when the system asks for less motion.
 class ScanFrame extends StatefulWidget {

@@ -23,16 +23,32 @@ class _MemoryStore implements ArchiveStore {
   Future<void> write(Map<String, dynamic> json) async => _data = json;
 }
 
-/// Text as ML Kit would read it off a few real-looking boxes.
+/// Text as the phone's text reader returns it for a few boxes. The first one
+/// is a real box (test/fixtures/delorazepam_box.jpg): lines out of order, the
+/// strength also printed on a round badge, and a taller logo at the bottom.
 const _sampleBoxes = <List<LabelLine>>[
   [
-    LabelLine('Medicinale da banco', 10),
-    LabelLine('TACHIPIRINA', 40),
-    LabelLine('500 mg', 20),
-    LabelLine('20 compresse', 14),
+    LabelLine('0,5', 100, top: 985),
+    LabelLine('Delorazepam', 92, top: 810),
+    LabelLine('mg', 52, top: 1090),
+    LabelLine('ratiopharm Italia', 88, top: 940),
+    LabelLine('0,5 mg compresse', 46, top: 1040),
+    LabelLine('Medicinale equivalente', 28, top: 1165),
+    LabelLine('Uso orale', 26, top: 1215),
+    LabelLine('teva', 82, top: 1300),
+    LabelLine('20 compresse', 30, top: 1295),
   ],
-  [LabelLine('Moment', 36), LabelLine('200 mg', 18), LabelLine('12 compresse rivestite', 12)],
-  [LabelLine('Bentelan', 32), LabelLine('0,5 mg', 16), LabelLine('10 compresse effervescenti', 12)],
+  [
+    LabelLine('Medicinale da banco', 10, top: 100),
+    LabelLine('TACHIPIRINA', 40, top: 140),
+    LabelLine('500 mg', 20, top: 200),
+    LabelLine('20 compresse', 14, top: 240),
+  ],
+  [
+    LabelLine('Moment', 36, top: 100),
+    LabelLine('200 mg', 18, top: 160),
+    LabelLine('12 compresse rivestite', 12, top: 200),
+  ],
   [LabelLine('xx??', 8)], // a blurry photo: nothing readable
 ];
 
@@ -49,7 +65,13 @@ class _SampleReader implements MedicineScanner {
 Future<void> main() async {
   final repository = await ArchiveRepository.open(_MemoryStore());
   final anna = await repository.createProfile('Anna');
-  await repository.addMedicine(anna.id, name: 'Aspirina 500 mg', quantity: 10, unit: 'compresse');
+  await repository.addMedicine(
+    anna.id,
+    name: 'Aspirina',
+    strength: '500 mg',
+    quantity: 10,
+    unit: 'compresse',
+  );
 
   var next = 0;
   runApp(

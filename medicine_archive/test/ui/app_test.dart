@@ -162,8 +162,14 @@ void main() {
 
   group('strength', () {
     testWidgets('a scanned strength is shown for checking, then kept and listed', (tester) async {
-      final scanner = FakeScanner(const LabelResult(
-          name: 'Delorazepam ratiopharm Italia', strength: '0,5 mg', quantity: 20, unit: 'compresse'));
+      final scanner = FakeScanner(
+        const LabelResult(
+          name: 'Delorazepam ratiopharm Italia',
+          strength: '0,5 mg',
+          quantity: 20,
+          unit: 'compresse',
+        ),
+      );
       await pumpApp(tester, scanner: scanner);
       await openProfile(tester, 'Anna');
       await tester.tap(find.text('Scan box'));
