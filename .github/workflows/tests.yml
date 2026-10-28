@@ -10,3 +10,17 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
       - run: pytest -q
+  flutter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: medicine_archive
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.7"
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test

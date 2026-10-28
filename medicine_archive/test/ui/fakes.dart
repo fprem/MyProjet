@@ -1,6 +1,5 @@
 import 'package:medicine_archive/data/archive_repository.dart';
 import 'package:medicine_archive/data/archive_store.dart';
-import 'package:medicine_archive/scan/label_parser.dart';
 import 'package:medicine_archive/scan/photo_scanner.dart';
 
 class MemoryStore implements ArchiveStore {

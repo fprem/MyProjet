@@ -42,6 +42,7 @@ void main() {
       await tester.tap(find.text('New profile'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'Anna');
+      await tester.pump();
       await tester.tap(find.text('Create'));
       await tester.pumpAndSettle();
 
@@ -86,6 +87,7 @@ void main() {
       expect(find.text('The photo has been deleted.'), findsOneWidget);
 
       await tester.enterText(find.widgetWithText(TextField, '20'), '18');
+      await tester.pump();
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
 
@@ -121,6 +123,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Aspirina');
       await tester.enterText(find.widgetWithText(TextField, 'Quantity'), '10');
+      await tester.pump();
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
       expect(find.text('Aspirina'), findsOneWidget);
