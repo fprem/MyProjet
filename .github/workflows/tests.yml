@@ -12,6 +12,8 @@ jobs:
       - run: pytest -q
   flutter:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: medicine_archive
@@ -33,3 +35,16 @@ jobs:
         with:
           name: medicine-archive-debug-apk
           path: medicine_archive/build/app/outputs/flutter-apk/app-debug.apk
+      - run: flutter build apk --release --split-per-abi
+      # On every push, put the phone build on one pre-release so there is a
+      # single link to download it from.
+      - name: Publish the phone build
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk medicine-archive.apk
+          gh release view medicine-archive-latest >/dev/null 2>&1 || gh release create medicine-archive-latest \
+            --prerelease --target "$GITHUB_SHA" --title "Medicine Archive (latest test build)" \
+            --notes "Test build of the Medicine Archive Android app, updated on every push. Install medicine-archive.apk on an Android 6.0+ phone."
+          gh release upload medicine-archive-latest medicine-archive.apk --clobber
