@@ -149,4 +149,45 @@ void main() {
       expect(parser.parse([line('0,5 mg', 30)]).isEmpty, isFalse);
     });
   });
+
+  group('pack size on the real box', () {
+    final box = [
+      line('Delorazepam', 92, 810),
+      line('0,5 mg compresse', 46, 1040),
+      line('Medicinale equivalente', 28, 1165),
+      line('Uso orale', 26, 1215),
+    ];
+
+    test('reads 20 compresse from its outlined badge', () {
+      final result = parser.parse([...box, line('20 compresse', 30, 1295)]);
+      expect(result.quantity, 20);
+      expect(result.unit, 'compresse');
+    });
+
+    test('reads it when the number and the word come as two lines', () {
+      final result = parser.parse([...box, line('20', 30, 1295), line('compresse', 30, 1295)]);
+      expect(result.quantity, 20);
+      expect(result.unit, 'compresse');
+    });
+
+    test('reads it through the badge outline and spacing noise', () {
+      for (final printed in ['(20 compresse)', '|20 compresse|', '20compresse', '20 COMPRESSE', '20 Compresse.']) {
+        final result = parser.parse([...box, line(printed, 30, 1295)]);
+        expect(result.quantity, 20, reason: printed);
+        expect(result.unit, 'compresse', reason: printed);
+      }
+    });
+
+    test('the dose line is never taken for the pack size', () {
+      final result = parser.parse(box);
+      expect(result.quantity, isNull);
+      expect(result.strength, '0,5 mg');
+    });
+
+    test('a pack size of 20 is not confused with a strength of 0,5', () {
+      final result = parser.parse([...box, line('20 compresse', 30, 1295)]);
+      expect(result.strength, '0,5 mg');
+      expect(result.quantity, 20);
+    });
+  });
 }
