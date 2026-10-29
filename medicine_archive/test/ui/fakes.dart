@@ -15,7 +15,12 @@ class MemoryStore implements ArchiveStore {
   Future<void> write(Map<String, dynamic> json) async => data = json;
 }
 
-Future<ArchiveRepository> memoryRepository() => ArchiveRepository.open(MemoryStore());
+/// A repository past the welcome screens, as most tests want.
+Future<ArchiveRepository> memoryRepository({bool onboarded = true}) async {
+  final repo = await ArchiveRepository.open(MemoryStore());
+  if (onboarded) await repo.completeOnboarding();
+  return repo;
+}
 
 class FakeScanner implements MedicineScanner {
   FakeScanner(
