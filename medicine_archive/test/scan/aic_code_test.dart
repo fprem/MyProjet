@@ -19,6 +19,10 @@ void main() {
       expect(AicCode.fromBarcode('0108012745093002${gs}712012745093${gs}17271231'), '012745093');
     });
 
+    test('reads the AIC in GS1 text written with brackets', () {
+      expect(AicCode.fromBarcode('(01)08012745093007(712)012745093(17)271231'), '012745093');
+    });
+
     test('rejects codes whose check digit is wrong', () {
       expect(AicCode.fromBarcode('012745094'), isNull);
       expect(AicCode.fromBarcode('0D4YD6'), isNull);
