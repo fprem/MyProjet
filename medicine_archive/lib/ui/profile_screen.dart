@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../app.dart';
 import '../data/archive_repository.dart';
+import '../scan/barcode_scan.dart';
 import '../scan/photo_scanner.dart';
 import 'brand.dart';
 import 'empty_state.dart';
@@ -17,12 +18,14 @@ class ProfileScreen extends StatefulWidget {
     required this.profile,
     required this.scanner,
     required this.takePhoto,
+    this.scanBarcode,
   });
 
   final ArchiveRepository repository;
   final Profile profile;
   final MedicineScanner scanner;
   final TakePhoto takePhoto;
+  final ScanBarcode? scanBarcode;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -33,7 +36,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   ArchiveRepository get _repo => widget.repository;
 
+  /// Scan box: the barcode first, then a photo of the text if needed.
   Future<void> _scan() async {
+    String? missedAic;
+    if (widget.scanBarcode case final scanBarcode?) {
+      final outcome = await scanBarcode(context);
+      if (outcome == null || !mounted) return;
+      if (outcome case BarcodeRead(:final aic)) {
+        setState(() => _reading = true);
+        final found = await widget.scanner.lookup(aic);
+        if (!mounted) return;
+        setState(() => _reading = false);
+        if (found.fromCatalog) {
+          await _openForm(
+            title: 'Check medicine',
+            initial: found.label,
+            notice: ["From the barcode: AIC $aic, found in AIFA's medicine list."],
+          );
+          return;
+        }
+        missedAic = aic;
+      }
+    }
+    await _scanPhoto(missedAic: missedAic);
+  }
+
+  Future<void> _scanPhoto({String? missedAic}) async {
     final path = await widget.takePhoto();
     if (path == null || !mounted) return;
 
@@ -45,8 +73,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       message = result.label.isEmpty
           ? "Couldn't read the label. Please type it in."
           : result.fromCatalog
-          ? "Found from the barcode in AIFA's medicine list."
-          : 'Check what was read and fix anything that is wrong.';
+          ? "From the barcode in the photo: AIC ${result.aic}, found in AIFA's medicine list."
+          : missedAic != null
+          ? "The barcode (AIC $missedAic) isn't in AIFA's list, so the text in the photo was read."
+          : 'Read from the text in the photo. Check it and fix anything that is wrong.';
     } catch (_) {
       result = const ScanResult(LabelResult.empty());
       message = "Couldn't read the label. Please type it in.";
@@ -67,6 +97,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<Uint8List?> _addPhoto() async {
+    final path = await widget.takePhoto();
+    if (path == null) return null;
+    return widget.scanner.readPhoto(path);
+  }
+
   Future<void> _openForm({
     required String title,
     LabelResult initial = const LabelResult.empty(),
@@ -85,6 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           notice: notice,
           photo: photo,
           keepPhoto: editing != null && photo != null,
+          addPhoto: _addPhoto,
         ),
       ),
     );
@@ -96,10 +133,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         strength: draft.strength,
         quantity: draft.quantity,
         unit: draft.unit,
-        photo: draft.keepPhoto ? photo : null,
+        photo: draft.keepPhoto ? draft.photo ?? photo : null,
       );
     } else {
-      if (editing.hasPhoto && !draft.keepPhoto) await _repo.removePhoto(editing.id);
+      if (draft.keepPhoto && draft.photo != null && !identical(draft.photo, photo)) {
+        await _repo.setPhoto(editing.id, draft.photo!);
+      } else if (editing.hasPhoto && !draft.keepPhoto) {
+        await _repo.removePhoto(editing.id);
+      }
       await _repo.updateMedicine(
         editing.copyWith(
           name: draft.name,

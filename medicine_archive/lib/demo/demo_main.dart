@@ -17,6 +17,7 @@ import '../app.dart';
 import '../data/archive_repository.dart';
 import '../data/archive_store.dart';
 import '../scan/aic_code.dart';
+import '../scan/barcode_scan.dart';
 import '../scan/medicine_catalog.dart';
 import '../scan/photo_scanner.dart';
 
@@ -68,6 +69,15 @@ final _catalog = AifaCatalog.fromTsv('012745093\tTachipirina\t500 mg\t20\tcompre
 
 class _SampleScanner implements MedicineScanner {
   final _parser = const LabelParser();
+
+  @override
+  Future<ScanResult> lookup(String aic) async {
+    final known = await _catalog.lookup(aic);
+    return ScanResult(known ?? const LabelResult.empty(), aic: aic, fromCatalog: known != null);
+  }
+
+  @override
+  Future<Uint8List?> readPhoto(String imagePath) => _drawBox(_sampleBoxes[int.parse(imagePath)]);
 
   @override
   Future<ScanResult> scan(String imagePath) async {
@@ -148,7 +158,47 @@ Future<void> main() async {
     MedicineArchiveApp(
       repository: repository,
       scanner: _SampleScanner(),
+      scanBarcode: _sampleBarcodeScan,
       takePhoto: () async => '${next++ % _sampleBoxes.length}',
     ),
   );
 }
+
+/// Stands in for the live camera: one tap reads Tachipirina's barcode.
+Future<BarcodeScan?> _sampleBarcodeScan(BuildContext context) => Navigator.push<BarcodeScan>(
+  context,
+  MaterialPageRoute(
+    builder: (context) => Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: const Text('Scan the barcode'),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 16,
+          children: [
+            const Text(
+              'Here the phone shows the live camera. In this preview, pick what it sees:',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(context, BarcodeRead(AicCode.fromBarcode('0D4YD5')!)),
+              icon: const Icon(Icons.qr_code_scanner_rounded),
+              label: const Text('Tachipirina barcode'),
+            ),
+            FilledButton.tonalIcon(
+              onPressed: () => Navigator.pop(context, const UsePhotoInstead()),
+              icon: const Icon(Icons.photo_camera_outlined),
+              label: const Text('No barcode? Take a photo'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  ),
+);

@@ -11,6 +11,7 @@ class MedicineDraft {
     this.unit = '',
     this.strength = '',
     this.keepPhoto = false,
+    this.photo,
   });
   final String name;
   final int? quantity;
@@ -19,6 +20,10 @@ class MedicineDraft {
 
   /// Whether the box photo shown in the form should be kept.
   final bool keepPhoto;
+
+  /// The photo shown in the form: the one it was opened with, or one the
+  /// person added.
+  final Uint8List? photo;
 }
 
 /// Lets the person check or type a medicine's name and quantity. Pops with a
@@ -31,6 +36,7 @@ class MedicineFormScreen extends StatefulWidget {
     this.notice = const [],
     this.photo,
     this.keepPhoto = false,
+    this.addPhoto,
   });
 
   final String title;
@@ -44,6 +50,9 @@ class MedicineFormScreen extends StatefulWidget {
   final Uint8List? photo;
   final bool keepPhoto;
 
+  /// Takes a photo of the box, when there is none yet.
+  final Future<Uint8List?> Function()? addPhoto;
+
   @override
   State<MedicineFormScreen> createState() => _MedicineFormScreenState();
 }
@@ -54,6 +63,16 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
   late final _unit = TextEditingController(text: widget.initial.unit);
   late final _strength = TextEditingController(text: widget.initial.strength);
   late bool _keepPhoto = widget.keepPhoto;
+  late Uint8List? _photo = widget.photo;
+
+  Future<void> _takePhoto() async {
+    final photo = await widget.addPhoto!();
+    if (photo == null || !mounted) return;
+    setState(() {
+      _photo = photo;
+      _keepPhoto = true;
+    });
+  }
 
   @override
   void dispose() {
@@ -76,7 +95,8 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
         strength: _strength.text.trim(),
         quantity: _parsedQuantity,
         unit: _unit.text.trim(),
-        keepPhoto: widget.photo != null && _keepPhoto,
+        keepPhoto: _photo != null && _keepPhoto,
+        photo: _photo,
       ),
     );
   }
@@ -167,7 +187,15 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
               ),
             ],
           ),
-          if (widget.photo case final photo?) ...[
+          if (_photo == null && widget.addPhoto != null) ...[
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: _takePhoto,
+              icon: const Icon(Icons.add_a_photo_outlined),
+              label: const Text('Add a photo of the box'),
+            ),
+          ],
+          if (_photo case final photo?) ...[
             const SizedBox(height: 20),
             Card(
               clipBehavior: Clip.antiAlias,

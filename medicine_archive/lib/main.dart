@@ -10,9 +10,10 @@ import 'data/encrypted_file_store.dart';
 import 'data/key_provider.dart';
 import 'data/photo_store.dart';
 import 'scan/aifa_asset_catalog.dart';
-import 'scan/mlkit_barcode_reader.dart';
+import 'scan/photo_barcode_reader.dart';
 import 'scan/mlkit_label_reader.dart';
 import 'scan/photo_scanner.dart';
+import 'ui/barcode_scan_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,9 +37,10 @@ Future<void> main() async {
       repository: repository,
       scanner: PhotoScanner(
         reader: MlKitLabelReader(),
-        barcodes: MlKitBarcodeReader(),
+        barcodes: PhotoBarcodeReader(),
         catalog: bundledAifaCatalog(),
       ),
+      scanBarcode: scanBarcodeLive,
       takePhoto: () async {
         final photo = await picker.pickImage(
           source: ImageSource.camera,

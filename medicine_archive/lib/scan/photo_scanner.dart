@@ -34,9 +34,15 @@ class ScanResult {
   final Uint8List? photo;
 }
 
-/// Turns a photo of a medicine box into a [ScanResult].
+/// Turns a photo or a barcode of a medicine box into a [ScanResult].
 abstract interface class MedicineScanner {
   Future<ScanResult> scan(String imagePath);
+
+  /// Looks up an AIC read by the live barcode scanner.
+  Future<ScanResult> lookup(String aic);
+
+  /// Reads a photo of the box into memory and deletes the file.
+  Future<Uint8List?> readPhoto(String imagePath);
 }
 
 class _NoBarcodes implements BarcodeReader {
@@ -67,6 +73,22 @@ class PhotoScanner implements MedicineScanner {
   final BarcodeReader barcodes;
   final MedicineCatalog catalog;
   final LabelParser parser;
+
+  @override
+  Future<ScanResult> lookup(String aic) async {
+    final known = await catalog.lookup(aic);
+    return ScanResult(known ?? const LabelResult.empty(), aic: aic, fromCatalog: known != null);
+  }
+
+  @override
+  Future<Uint8List?> readPhoto(String imagePath) async {
+    final file = File(imagePath);
+    try {
+      return await file.readAsBytes();
+    } finally {
+      if (await file.exists()) await file.delete();
+    }
+  }
 
   @override
   Future<ScanResult> scan(String imagePath) async {

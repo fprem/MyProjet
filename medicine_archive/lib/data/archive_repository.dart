@@ -105,6 +105,15 @@ class ArchiveRepository extends ChangeNotifier {
   Future<Uint8List?> photoOf(Medicine medicine) async =>
       medicine.hasPhoto ? _photos.read(medicine.id) : null;
 
+  /// Keeps [bytes] as the photo of a medicine's box, encrypted.
+  Future<void> setPhoto(String medicineId, Uint8List bytes) async {
+    final index = _medicines.indexWhere((m) => m.id == medicineId);
+    if (index < 0) throw ArgumentError.value(medicineId, 'id', 'No such medicine');
+    await _photos.write(medicineId, bytes);
+    _medicines[index] = _medicines[index].copyWith(hasPhoto: true);
+    await _save();
+  }
+
   /// Deletes the kept photo and keeps the medicine.
   Future<void> removePhoto(String medicineId) async {
     final index = _medicines.indexWhere((m) => m.id == medicineId);

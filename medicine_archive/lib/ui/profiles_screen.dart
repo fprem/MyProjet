@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app.dart';
 import '../data/archive_repository.dart';
+import '../scan/barcode_scan.dart';
 import '../scan/photo_scanner.dart';
 import 'brand.dart';
 import 'empty_state.dart';
@@ -13,11 +14,13 @@ class ProfilesScreen extends StatelessWidget {
     required this.repository,
     required this.scanner,
     required this.takePhoto,
+    this.scanBarcode,
   });
 
   final ArchiveRepository repository;
   final MedicineScanner scanner;
   final TakePhoto takePhoto;
+  final ScanBarcode? scanBarcode;
 
   Future<void> _createProfile(BuildContext context) async {
     final name = await showDialog<String>(
@@ -35,6 +38,7 @@ class ProfilesScreen extends StatelessWidget {
         profile: profile,
         scanner: scanner,
         takePhoto: takePhoto,
+        scanBarcode: scanBarcode,
       ),
     ),
   );
