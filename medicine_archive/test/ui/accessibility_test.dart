@@ -70,6 +70,20 @@ void main() {
         handle.dispose();
       });
 
+      testWidgets('archived tab', (tester) async {
+        final handle = tester.ensureSemantics();
+        final anna = await repo.createProfile('Anna');
+        final m = await repo.addMedicine(anna.id, name: 'Moment', strength: '200 mg', quantity: 12);
+        await repo.setArchived(m.id, true);
+        await pumpApp(tester, themeMode: mode);
+        await tester.tap(find.text('Anna'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Archived (1)'));
+        await tester.pumpAndSettle();
+        await meetsAll(tester);
+        handle.dispose();
+      });
+
       testWidgets('check medicine form', (tester) async {
         final handle = tester.ensureSemantics();
         await pumpApp(
