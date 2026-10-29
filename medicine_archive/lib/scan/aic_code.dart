@@ -8,7 +8,7 @@ abstract final class AicCode {
   static final _nineDigits = RegExp(r'^A?(\d{9})$');
   static final _code32Value = RegExp('^[$_code32]{6}\$');
   // GS1 DataMatrix: application identifier 712 holds the Italian AIC.
-  static final _gs1Aic = RegExp(r'712(\d{9})');
+  static final _gs1Aic = RegExp(r'\(?712\)?(\d{9})');
   static final _textAic = RegExp(
     r'A\.?\s?I\.?\s?C\.?\s*(?:n[.°º]?|nr\.?)?\s*:?\s*(\d{9})\b|\bA(\d{9})\b',
     caseSensitive: false,
