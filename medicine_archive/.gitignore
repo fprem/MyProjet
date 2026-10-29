@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Made by tool/build_aifa_catalog.dart on CI
+/assets/aifa/catalog.tsv.gz
