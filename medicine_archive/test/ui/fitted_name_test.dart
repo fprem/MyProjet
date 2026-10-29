@@ -21,34 +21,40 @@ Future<RenderParagraph> pumpName(WidgetTester tester, String name, {double width
   return tester.renderObject<RenderParagraph>(find.text(name));
 }
 
+/// The paragraph laid out again, to read its lines.
+TextPainter linesOf(RenderParagraph p) =>
+    TextPainter(text: p.text, textDirection: TextDirection.ltr, textScaler: p.textScaler)
+      ..layout(maxWidth: p.size.width);
+
 /// The text each rendered line starts with.
-List<String> lineStarts(RenderParagraph p, String text) => [
-  for (final line in p.computeLineMetrics())
-    text.substring(
-      p.getPositionForOffset(Offset(0, line.baseline - line.ascent + 1)).offset,
-    ),
-];
+List<String> lineStarts(RenderParagraph p, String text) {
+  final tp = linesOf(p);
+  return [
+    for (final line in tp.computeLineMetrics())
+      text.substring(tp.getPositionForOffset(Offset(1, line.baseline - line.ascent + 1)).offset),
+  ];
+}
 
 void main() {
   testWidgets('a short name keeps the full size', (tester) async {
     final p = await pumpName(tester, 'Moment');
     expect(p.text.style!.fontSize, 22);
-    expect(p.computeLineMetrics(), hasLength(1));
+    expect(linesOf(p).computeLineMetrics(), hasLength(1));
   });
 
   testWidgets('a name a little too long shrinks to stay on one line', (tester) async {
-    // At 22 this wraps; a smaller size fits it on one line.
+    // Test glyphs are as wide as the font size: at 22 this needs 484 px.
     const name = 'Delorazepam ratiopharm';
-    final p = await pumpName(tester, name, width: 230);
-    expect(p.computeLineMetrics(), hasLength(1));
+    final p = await pumpName(tester, name, width: 400);
+    expect(linesOf(p).computeLineMetrics(), hasLength(1));
     expect(p.text.style!.fontSize, lessThan(22));
     expect(p.text.style!.fontSize, greaterThanOrEqualTo(16));
   });
 
   testWidgets('one long word is never split, with letters left on a new line', (tester) async {
     const name = 'Paracetamolocodeina';
-    final p = await pumpName(tester, name, width: 180);
-    expect(p.computeLineMetrics(), hasLength(1));
+    final p = await pumpName(tester, name, width: 300);
+    expect(linesOf(p).computeLineMetrics(), hasLength(1));
   });
 
   testWidgets('a very long name wraps between words only', (tester) async {
@@ -62,6 +68,14 @@ void main() {
     }
     // The last line is a real word, not a stray letter or two.
     expect(starts.last.trim().length, greaterThan(2));
+  });
+
+  testWidgets('shrinks a little to use fewer lines', (tester) async {
+    // At 22 this needs three lines, at 20 it fits in two.
+    const name = 'Sali di ferro e acido folico';
+    final p = await pumpName(tester, name, width: 300);
+    expect(linesOf(p).computeLineMetrics(), hasLength(2));
+    expect(p.text.style!.fontSize, greaterThanOrEqualTo(18));
   });
 
   testWidgets('never gets too small to read', (tester) async {
