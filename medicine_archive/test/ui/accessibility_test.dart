@@ -9,10 +9,10 @@ import 'package:medicine_archive/scan/photo_scanner.dart';
 import 'fakes.dart';
 
 class SlowScanner implements MedicineScanner {
-  final completer = Completer<LabelResult>();
+  final completer = Completer<ScanResult>();
 
   @override
-  Future<LabelResult> scan(String imagePath) => completer.future;
+  Future<ScanResult> scan(String imagePath) => completer.future;
 }
 
 void main() {
@@ -107,7 +107,7 @@ void main() {
       containsSemantics(isLiveRegion: true),
     );
 
-    scanner.completer.complete(const LabelResult.empty());
+    scanner.completer.complete(const ScanResult(LabelResult.empty()));
     await tester.pumpAndSettle();
     handle.dispose();
   });

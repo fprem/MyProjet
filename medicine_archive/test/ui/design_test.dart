@@ -10,10 +10,10 @@ import 'package:medicine_archive/ui/brand.dart';
 import 'fakes.dart';
 
 class _SlowScanner implements MedicineScanner {
-  final completer = Completer<LabelResult>();
+  final completer = Completer<ScanResult>();
 
   @override
-  Future<LabelResult> scan(String imagePath) => completer.future;
+  Future<ScanResult> scan(String imagePath) => completer.future;
 }
 
 void main() {
@@ -73,7 +73,7 @@ void main() {
     await tester.tap(find.text('Scan box'));
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(ScanFrame), findsOneWidget);
-    scanner.completer.complete(const LabelResult.empty());
+    scanner.completer.complete(const ScanResult(LabelResult.empty()));
     await tester.pumpAndSettle();
   });
 
