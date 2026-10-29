@@ -152,6 +152,15 @@ Future<void> main() async {
     quantity: 10,
     unit: 'compresse',
   );
+  // A finished antibiotic course, so the Archived tab has something in it.
+  final augmentin = await repository.addMedicine(
+    anna.id,
+    name: 'Augmentin',
+    strength: '875 mg',
+    quantity: 12,
+    unit: 'compresse',
+  );
+  await repository.setArchived(augmentin.id, true);
 
   var next = 0;
   runApp(
