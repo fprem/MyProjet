@@ -36,9 +36,10 @@ class ArchiveRepository extends ChangeNotifier {
     [..._profiles]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())),
   );
 
-  /// The medicines of one profile, sorted by name.
-  List<Medicine> medicinesOf(String profileId) => List.unmodifiable(
-    _medicines.where((m) => m.profileId == profileId).toList()
+  /// The medicines of one profile, sorted by name: the ones being taken, or
+  /// with [archived] the ones the person stopped taking.
+  List<Medicine> medicinesOf(String profileId, {bool archived = false}) => List.unmodifiable(
+    _medicines.where((m) => m.profileId == profileId && m.archived == archived).toList()
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())),
   );
 
@@ -90,8 +91,11 @@ class ArchiveRepository extends ChangeNotifier {
   Future<void> updateMedicine(Medicine medicine) async {
     final index = _medicines.indexWhere((m) => m.id == medicine.id);
     if (index < 0) throw ArgumentError.value(medicine.id, 'id', 'No such medicine');
-    // The photo is changed only through [removePhoto].
-    _medicines[index] = _validate(medicine.copyWith(hasPhoto: _medicines[index].hasPhoto));
+    // The photo and the archive are changed only through their own methods.
+    final current = _medicines[index];
+    _medicines[index] = _validate(
+      medicine.copyWith(hasPhoto: current.hasPhoto, archived: current.archived),
+    );
     await _save();
   }
 
@@ -104,6 +108,14 @@ class ArchiveRepository extends ChangeNotifier {
   /// The kept photo of [medicine]'s box, or null.
   Future<Uint8List?> photoOf(Medicine medicine) async =>
       medicine.hasPhoto ? _photos.read(medicine.id) : null;
+
+  /// Moves a medicine to the archive (stopped taking it), or back.
+  Future<void> setArchived(String medicineId, bool archived) async {
+    final index = _medicines.indexWhere((m) => m.id == medicineId);
+    if (index < 0) throw ArgumentError.value(medicineId, 'id', 'No such medicine');
+    _medicines[index] = _medicines[index].copyWith(archived: archived);
+    await _save();
+  }
 
   /// Keeps [bytes] as the photo of a medicine's box, encrypted.
   Future<void> setPhoto(String medicineId, Uint8List bytes) async {
@@ -135,6 +147,7 @@ class ArchiveRepository extends ChangeNotifier {
       unit: m.unit.trim(),
       strength: m.strength.trim(),
       hasPhoto: m.hasPhoto,
+      archived: m.archived,
     );
   }
 

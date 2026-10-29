@@ -34,6 +34,9 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _reading = false;
 
+  /// Which tab is shown: the medicines being taken, or the archived ones.
+  bool _showArchived = false;
+
   ArchiveRepository get _repo => widget.repository;
 
   /// Scan box: the barcode first, then a photo of the text if needed.
@@ -127,6 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     if (draft == null) return;
     if (editing == null) {
+      setState(() => _showArchived = false); // new medicines are being taken
       await _repo.addMedicine(
         widget.profile.id,
         name: draft.name,
@@ -162,6 +166,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _setArchived(Medicine medicine, bool archived) async {
+    await _repo.setArchived(medicine.id, archived);
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('${medicine.name} ${archived ? 'archived' : 'restored'}'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () => _repo.setArchived(medicine.id, !archived),
+        ),
+      ),
+    );
+  }
+
   Future<void> _deleteProfile() async {
     final name = widget.profile.name;
     if (await confirmDelete(context, 'Delete $name and all their medicines?')) {
@@ -172,7 +191,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _reading
@@ -207,52 +225,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ListenableBuilder(
               listenable: _repo,
               builder: (context, _) {
-                final medicines = _repo.medicinesOf(widget.profile.id);
-                if (medicines.isEmpty) {
-                  return const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: EmptyState(
-                      title: 'No medicines yet',
-                      message:
-                          'Tap Scan box to photograph a medicine package. '
-                          'Only what you check and save is kept, encrypted on this phone.',
-                    ),
-                  );
-                }
-                final count = medicines.length;
-                return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
-                  sliver: SliverList.list(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
-                        child: Text(
-                          count == 1 ? '1 medicine' : '$count medicines',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            letterSpacing: 0.4,
-                          ),
+                final taking = _repo.medicinesOf(widget.profile.id);
+                final archived = _repo.medicinesOf(widget.profile.id, archived: true);
+                final medicines = _showArchived ? archived : taking;
+                return SliverMainAxisGroup(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: SegmentedButton<bool>(
+                          showSelectedIcon: false,
+                          segments: [
+                            ButtonSegment(
+                              value: false,
+                              icon: const Icon(Icons.medication_outlined),
+                              label: Text('Taking (${taking.length})'),
+                            ),
+                            ButtonSegment(
+                              value: true,
+                              icon: const Icon(Icons.inventory_2_outlined),
+                              label: Text('Archived (${archived.length})'),
+                            ),
+                          ],
+                          selected: {_showArchived},
+                          onSelectionChanged: (s) => setState(() => _showArchived = s.single),
                         ),
                       ),
-                      for (final medicine in medicines) ...[
-                        _MedicineCard(
-                          medicine: medicine,
-                          onTap: () => _openForm(
-                            title: 'Edit medicine',
-                            editing: medicine,
-                            initial: LabelResult(
-                              name: medicine.name,
-                              strength: medicine.strength,
-                              quantity: medicine.quantity,
-                              unit: medicine.unit,
-                            ),
-                          ),
-                          onDelete: () => _deleteMedicine(medicine),
+                    ),
+                    if (medicines.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _showArchived
+                            ? const EmptyState(
+                                title: 'No archived medicines',
+                                message:
+                                    'When someone stops taking a medicine, tap Archive '
+                                    'on it and it moves here.',
+                              )
+                            : const EmptyState(
+                                title: 'No medicines yet',
+                                message:
+                                    'Tap Scan box to read a medicine box. '
+                                    'Only what you check and save is kept, encrypted on this phone.',
+                              ),
+                      )
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+                        sliver: SliverList.list(
+                          children: [
+                            for (final medicine in medicines) ...[
+                              _MedicineCard(
+                                medicine: medicine,
+                                onTap: () => _openForm(
+                                  title: 'Edit medicine',
+                                  editing: medicine,
+                                  initial: LabelResult(
+                                    name: medicine.name,
+                                    strength: medicine.strength,
+                                    quantity: medicine.quantity,
+                                    unit: medicine.unit,
+                                  ),
+                                ),
+                                onArchive: () => _setArchived(medicine, !medicine.archived),
+                                onDelete: () => _deleteMedicine(medicine),
+                              ),
+                              const SizedBox(height: 10),
+                            ],
+                          ],
                         ),
-                        const SizedBox(height: 10),
-                      ],
-                    ],
-                  ),
+                      ),
+                  ],
                 );
               },
             ),
@@ -263,10 +306,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _MedicineCard extends StatelessWidget {
-  const _MedicineCard({required this.medicine, required this.onTap, required this.onDelete});
+  const _MedicineCard({
+    required this.medicine,
+    required this.onTap,
+    required this.onArchive,
+    required this.onDelete,
+  });
 
   final Medicine medicine;
   final VoidCallback onTap;
+
+  /// Archives the medicine, or restores it when it is archived.
+  final VoidCallback onArchive;
   final VoidCallback onDelete;
 
   @override
@@ -309,10 +360,23 @@ class _MedicineCard extends StatelessWidget {
                   ),
                 ),
               ),
-        trailing: IconButton(
-          tooltip: 'Delete ${medicine.name}',
-          icon: Icon(Icons.delete_outline_rounded, color: scheme.onSurfaceVariant),
-          onPressed: onDelete,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: medicine.archived ? 'Restore ${medicine.name}' : 'Archive ${medicine.name}',
+              icon: Icon(
+                medicine.archived ? Icons.unarchive_outlined : Icons.inventory_2_outlined,
+                color: scheme.onSurfaceVariant,
+              ),
+              onPressed: onArchive,
+            ),
+            IconButton(
+              tooltip: 'Delete ${medicine.name}',
+              icon: Icon(Icons.delete_outline_rounded, color: scheme.onSurfaceVariant),
+              onPressed: onDelete,
+            ),
+          ],
         ),
       ),
     );

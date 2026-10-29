@@ -19,6 +19,7 @@ class Medicine {
     this.unit = '',
     this.strength = '',
     this.hasPhoto = false,
+    this.archived = false,
   });
 
   final String id;
@@ -40,6 +41,10 @@ class Medicine {
   /// from the archive).
   final bool hasPhoto;
 
+  /// True once the person stopped taking it. Archived medicines are kept,
+  /// apart from the current list.
+  final bool archived;
+
   /// "20 compresse", just "20" when the unit is unknown, or empty when the
   /// quantity is unknown.
   String get quantityLabel {
@@ -56,6 +61,7 @@ class Medicine {
     String? unit,
     String? strength,
     bool? hasPhoto,
+    bool? archived,
   }) => Medicine(
     id: id,
     profileId: profileId,
@@ -64,6 +70,7 @@ class Medicine {
     unit: unit ?? this.unit,
     strength: strength ?? this.strength,
     hasPhoto: hasPhoto ?? this.hasPhoto,
+    archived: archived ?? this.archived,
   );
 
   Map<String, dynamic> toJson() => {
@@ -74,6 +81,7 @@ class Medicine {
     'unit': unit,
     'strength': strength,
     'hasPhoto': hasPhoto,
+    'archived': archived,
   };
 
   factory Medicine.fromJson(Map<String, dynamic> json) => Medicine(
@@ -84,5 +92,6 @@ class Medicine {
     unit: json['unit'] as String? ?? '',
     strength: json['strength'] as String? ?? '',
     hasPhoto: json['hasPhoto'] as bool? ?? false,
+    archived: json['archived'] as bool? ?? false,
   );
 }

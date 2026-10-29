@@ -59,7 +59,7 @@ void main() {
     await pumpApp(tester);
     await tester.tap(find.text('Anna'));
     await tester.pumpAndSettle();
-    expect(find.text('2 medicines'), findsWidgets);
+    expect(find.text('Taking (2)'), findsOneWidget); // the count is on the tab
   });
 
   testWidgets('each medicine shows its quantity as a pill', (tester) async {
