@@ -4,6 +4,7 @@ import 'data/archive_repository.dart';
 import 'scan/barcode_scan.dart';
 import 'scan/photo_scanner.dart';
 import 'ui/brand.dart';
+import 'ui/onboarding_screen.dart';
 import 'ui/profiles_screen.dart';
 
 /// Takes a photo and returns its file path, or null if the person cancelled.
@@ -36,11 +37,16 @@ class MedicineArchiveApp extends StatelessWidget {
       themeMode: themeMode,
       theme: Brand.lightTheme(),
       darkTheme: Brand.darkTheme(),
-      home: ProfilesScreen(
-        repository: repository,
-        scanner: scanner,
-        takePhoto: takePhoto,
-        scanBarcode: scanBarcode,
+      home: ListenableBuilder(
+        listenable: repository,
+        builder: (context, _) => repository.needsOnboarding
+            ? OnboardingScreen(onDone: repository.completeOnboarding)
+            : ProfilesScreen(
+                repository: repository,
+                scanner: scanner,
+                takePhoto: takePhoto,
+                scanBarcode: scanBarcode,
+              ),
       ),
     );
   }

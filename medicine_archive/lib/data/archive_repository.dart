@@ -16,6 +16,7 @@ class ArchiveRepository extends ChangeNotifier {
   final PhotoStore _photos;
   final List<Profile> _profiles = [];
   final List<Medicine> _medicines = [];
+  bool _onboarded = false;
 
   static Future<ArchiveRepository> open(ArchiveStore store, {PhotoStore? photos}) async {
     final repo = ArchiveRepository._(store, photos ?? MemoryPhotoStore());
@@ -27,8 +28,19 @@ class ArchiveRepository extends ChangeNotifier {
       repo._medicines.addAll(
         (json['medicines'] as List).map((m) => Medicine.fromJson(m as Map<String, dynamic>)),
       );
+      // Archives from before the welcome screens: anyone with profiles has
+      // already found their way around.
+      repo._onboarded = json['onboarded'] as bool? ?? repo._profiles.isNotEmpty;
     }
     return repo;
+  }
+
+  /// Whether to show the welcome screens: only at the very first start.
+  bool get needsOnboarding => !_onboarded;
+
+  Future<void> completeOnboarding() async {
+    _onboarded = true;
+    await _save();
   }
 
   /// All profiles, sorted by name.
@@ -166,6 +178,7 @@ class ArchiveRepository extends ChangeNotifier {
     await _store.write({
       'profiles': _profiles.map((p) => p.toJson()).toList(),
       'medicines': _medicines.map((m) => m.toJson()).toList(),
+      'onboarded': _onboarded,
     });
     notifyListeners();
   }
