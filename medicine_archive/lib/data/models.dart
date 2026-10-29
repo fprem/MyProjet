@@ -18,6 +18,7 @@ class Medicine {
     this.quantity,
     this.unit = '',
     this.strength = '',
+    this.hasPhoto = false,
   });
 
   final String id;
@@ -35,6 +36,10 @@ class Medicine {
   /// unknown. The same medicine often comes in several strengths.
   final String strength;
 
+  /// Whether the person kept a photo of the box (stored encrypted, apart
+  /// from the archive).
+  final bool hasPhoto;
+
   /// "20 compresse", just "20" when the unit is unknown, or empty when the
   /// quantity is unknown.
   String get quantityLabel {
@@ -45,15 +50,21 @@ class Medicine {
   static const _keep = Object();
 
   /// Pass `quantity: null` to clear the quantity.
-  Medicine copyWith({String? name, Object? quantity = _keep, String? unit, String? strength}) =>
-      Medicine(
-        id: id,
-        profileId: profileId,
-        name: name ?? this.name,
-        quantity: identical(quantity, _keep) ? this.quantity : quantity as int?,
-        unit: unit ?? this.unit,
-        strength: strength ?? this.strength,
-      );
+  Medicine copyWith({
+    String? name,
+    Object? quantity = _keep,
+    String? unit,
+    String? strength,
+    bool? hasPhoto,
+  }) => Medicine(
+    id: id,
+    profileId: profileId,
+    name: name ?? this.name,
+    quantity: identical(quantity, _keep) ? this.quantity : quantity as int?,
+    unit: unit ?? this.unit,
+    strength: strength ?? this.strength,
+    hasPhoto: hasPhoto ?? this.hasPhoto,
+  );
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -62,6 +73,7 @@ class Medicine {
     'quantity': quantity,
     'unit': unit,
     'strength': strength,
+    'hasPhoto': hasPhoto,
   };
 
   factory Medicine.fromJson(Map<String, dynamic> json) => Medicine(
@@ -71,5 +83,6 @@ class Medicine {
     quantity: json['quantity'] as int?,
     unit: json['unit'] as String? ?? '',
     strength: json['strength'] as String? ?? '',
+    hasPhoto: json['hasPhoto'] as bool? ?? false,
   );
 }

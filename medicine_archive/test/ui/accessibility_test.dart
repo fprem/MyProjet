@@ -79,6 +79,25 @@ void main() {
         await meetsAll(tester);
         handle.dispose();
       });
+
+      testWidgets('check medicine form with the box photo kept', (tester) async {
+        final handle = tester.ensureSemantics();
+        await pumpApp(
+          tester,
+          themeMode: mode,
+          scanner: FakeScanner(const LabelResult(name: 'Moment'), photo: tinyPng),
+        );
+        await repo.createProfile('Anna');
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Anna'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Scan box'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Keep the box photo'));
+        await tester.pumpAndSettle();
+        await meetsAll(tester);
+        handle.dispose();
+      });
     });
   }
 

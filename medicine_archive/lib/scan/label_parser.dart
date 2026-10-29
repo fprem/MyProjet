@@ -158,7 +158,7 @@ class LabelParser {
 
     if (!located) {
       big.sort((a, b) => b.height.compareTo(a.height));
-      return _tidy(big.first.text);
+      return tidy(big.first.text);
     }
 
     // Top to bottom. The name starts at the highest big line and takes the
@@ -170,7 +170,7 @@ class LabelParser {
       if (gap > name.last.height * 0.5) break;
       name.add(next);
     }
-    return name.map((l) => _tidy(l.text)).join(' ');
+    return name.map((l) => tidy(l.text)).join(' ');
   }
 
   (int, String)? _quantityIn(String text) {
@@ -185,7 +185,7 @@ class LabelParser {
 
   /// Boxes often print the brand in capitals; "TACHIPIRINA" reads better as
   /// "Tachipirina". Mixed-case names are left as printed.
-  static String _tidy(String text) {
+  static String tidy(String text) {
     if (text != text.toUpperCase()) return text;
     return text
         .toLowerCase()

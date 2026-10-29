@@ -5,11 +5,20 @@ import '../scan/label_parser.dart';
 
 /// What the person confirmed in the form.
 class MedicineDraft {
-  const MedicineDraft({required this.name, this.quantity, this.unit = '', this.strength = ''});
+  const MedicineDraft({
+    required this.name,
+    this.quantity,
+    this.unit = '',
+    this.strength = '',
+    this.keepPhoto = false,
+  });
   final String name;
   final int? quantity;
   final String unit;
   final String strength;
+
+  /// Whether the box photo shown in the form should be kept.
+  final bool keepPhoto;
 }
 
 /// Lets the person check or type a medicine's name and quantity. Pops with a
@@ -20,6 +29,8 @@ class MedicineFormScreen extends StatefulWidget {
     required this.title,
     this.initial = const LabelResult.empty(),
     this.notice = const [],
+    this.photo,
+    this.keepPhoto = false,
   });
 
   final String title;
@@ -27,6 +38,11 @@ class MedicineFormScreen extends StatefulWidget {
 
   /// Lines shown above the form, such as what happened to the photo.
   final List<String> notice;
+
+  /// The box photo, when there is one. The person decides whether to keep
+  /// it; [keepPhoto] is where the switch starts.
+  final Uint8List? photo;
+  final bool keepPhoto;
 
   @override
   State<MedicineFormScreen> createState() => _MedicineFormScreenState();
@@ -37,6 +53,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
   late final _quantity = TextEditingController(text: widget.initial.quantity?.toString() ?? '');
   late final _unit = TextEditingController(text: widget.initial.unit);
   late final _strength = TextEditingController(text: widget.initial.strength);
+  late bool _keepPhoto = widget.keepPhoto;
 
   @override
   void dispose() {
@@ -59,6 +76,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
         strength: _strength.text.trim(),
         quantity: _parsedQuantity,
         unit: _unit.text.trim(),
+        keepPhoto: widget.photo != null && _keepPhoto,
       ),
     );
   }
@@ -149,6 +167,46 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
               ),
             ],
           ),
+          if (widget.photo case final photo?) ...[
+            const SizedBox(height: 20),
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SwitchListTile(
+                    value: _keepPhoto,
+                    onChanged: (v) => setState(() => _keepPhoto = v),
+                    title: const Text('Keep the box photo'),
+                    subtitle: const Text('Saved encrypted, shown on this page'),
+                    secondary: const Icon(Icons.photo_outlined),
+                  ),
+                  if (_keepPhoto)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.memory(
+                          photo,
+                          semanticLabel: 'Photo of the box',
+                          fit: BoxFit.contain,
+                          height: 280,
+                          errorBuilder: (_, _, _) => SizedBox(
+                            height: 80,
+                            child: Center(
+                              child: Text(
+                                "The photo can't be shown.",
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 28),
           FilledButton(onPressed: _canSave ? _save : null, child: const Text('Save')),
           const SizedBox(height: 16),

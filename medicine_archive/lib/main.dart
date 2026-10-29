@@ -8,6 +8,9 @@ import 'app.dart';
 import 'data/archive_repository.dart';
 import 'data/encrypted_file_store.dart';
 import 'data/key_provider.dart';
+import 'data/photo_store.dart';
+import 'scan/aifa_asset_catalog.dart';
+import 'scan/mlkit_barcode_reader.dart';
 import 'scan/mlkit_label_reader.dart';
 import 'scan/photo_scanner.dart';
 
@@ -15,14 +18,13 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final dir = await getApplicationSupportDirectory();
-  final store = EncryptedFileStore(
-    file: File('${dir.path}/archive.enc'),
-    keys: SecureStorageKeyProvider(),
-  );
+  final keys = SecureStorageKeyProvider();
+  final store = EncryptedFileStore(file: File('${dir.path}/archive.enc'), keys: keys);
+  final photos = EncryptedPhotoStore(directory: Directory('${dir.path}/photos'), keys: keys);
 
   final ArchiveRepository repository;
   try {
-    repository = await ArchiveRepository.open(store);
+    repository = await ArchiveRepository.open(store, photos: photos);
   } on ArchiveDecryptionException catch (e) {
     runApp(_ErrorApp(message: "The archive couldn't be opened. ${e.message}."));
     return;
@@ -32,9 +34,17 @@ Future<void> main() async {
   runApp(
     MedicineArchiveApp(
       repository: repository,
-      scanner: PhotoScanner(reader: MlKitLabelReader()),
+      scanner: PhotoScanner(
+        reader: MlKitLabelReader(),
+        barcodes: MlKitBarcodeReader(),
+        catalog: bundledAifaCatalog(),
+      ),
       takePhoto: () async {
-        final photo = await picker.pickImage(source: ImageSource.camera, maxWidth: 2000);
+        final photo = await picker.pickImage(
+          source: ImageSource.camera,
+          maxWidth: 2000,
+          imageQuality: 85,
+        );
         return photo?.path;
       },
     ),

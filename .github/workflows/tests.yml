@@ -28,6 +28,11 @@ jobs:
           flutter-version: "3.35.7"
           channel: stable
       - run: flutter pub get
+      # AIFA's list of medicine packs, for looking up barcodes offline. If AIFA
+      # can't be reached the app is built without it and reads the text instead.
+      - name: Build AIFA's medicine list into the app
+        continue-on-error: true
+        run: dart run tool/build_aifa_catalog.dart
       - run: flutter analyze
       - run: flutter test
       - run: flutter build apk --debug

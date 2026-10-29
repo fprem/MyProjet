@@ -4,19 +4,21 @@ import 'package:flutter/foundation.dart';
 
 import 'archive_store.dart';
 import 'models.dart';
+import 'photo_store.dart';
 
 export 'models.dart';
 
 /// Profiles and their medicines. Every change is saved to the store at once.
 class ArchiveRepository extends ChangeNotifier {
-  ArchiveRepository._(this._store);
+  ArchiveRepository._(this._store, this._photos);
 
   final ArchiveStore _store;
+  final PhotoStore _photos;
   final List<Profile> _profiles = [];
   final List<Medicine> _medicines = [];
 
-  static Future<ArchiveRepository> open(ArchiveStore store) async {
-    final repo = ArchiveRepository._(store);
+  static Future<ArchiveRepository> open(ArchiveStore store, {PhotoStore? photos}) async {
+    final repo = ArchiveRepository._(store, photos ?? MemoryPhotoStore());
     final json = await store.read();
     if (json != null) {
       repo._profiles.addAll(
@@ -48,9 +50,13 @@ class ArchiveRepository extends ChangeNotifier {
   }
 
   Future<void> deleteProfile(String profileId) async {
+    final gone = _medicines.where((m) => m.profileId == profileId).toList();
     _profiles.removeWhere((p) => p.id == profileId);
     _medicines.removeWhere((m) => m.profileId == profileId);
     await _save();
+    for (final m in gone) {
+      if (m.hasPhoto) await _photos.delete(m.id);
+    }
   }
 
   Future<Medicine> addMedicine(
@@ -59,6 +65,7 @@ class ArchiveRepository extends ChangeNotifier {
     int? quantity,
     String unit = '',
     String strength = '',
+    Uint8List? photo,
   }) async {
     if (!_profiles.any((p) => p.id == profileId)) {
       throw ArgumentError.value(profileId, 'profileId', 'No such profile');
@@ -71,8 +78,10 @@ class ArchiveRepository extends ChangeNotifier {
         quantity: quantity,
         unit: unit,
         strength: strength,
+        hasPhoto: photo != null,
       ),
     );
+    if (photo != null) await _photos.write(medicine.id, photo);
     _medicines.add(medicine);
     await _save();
     return medicine;
@@ -81,13 +90,28 @@ class ArchiveRepository extends ChangeNotifier {
   Future<void> updateMedicine(Medicine medicine) async {
     final index = _medicines.indexWhere((m) => m.id == medicine.id);
     if (index < 0) throw ArgumentError.value(medicine.id, 'id', 'No such medicine');
-    _medicines[index] = _validate(medicine);
+    // The photo is changed only through [removePhoto].
+    _medicines[index] = _validate(medicine.copyWith(hasPhoto: _medicines[index].hasPhoto));
     await _save();
   }
 
   Future<void> deleteMedicine(String medicineId) async {
     _medicines.removeWhere((m) => m.id == medicineId);
     await _save();
+    await _photos.delete(medicineId);
+  }
+
+  /// The kept photo of [medicine]'s box, or null.
+  Future<Uint8List?> photoOf(Medicine medicine) async =>
+      medicine.hasPhoto ? _photos.read(medicine.id) : null;
+
+  /// Deletes the kept photo and keeps the medicine.
+  Future<void> removePhoto(String medicineId) async {
+    final index = _medicines.indexWhere((m) => m.id == medicineId);
+    if (index < 0) return;
+    _medicines[index] = _medicines[index].copyWith(hasPhoto: false);
+    await _save();
+    await _photos.delete(medicineId);
   }
 
   Medicine _validate(Medicine m) {
@@ -101,6 +125,7 @@ class ArchiveRepository extends ChangeNotifier {
       quantity: m.quantity,
       unit: m.unit.trim(),
       strength: m.strength.trim(),
+      hasPhoto: m.hasPhoto,
     );
   }
 

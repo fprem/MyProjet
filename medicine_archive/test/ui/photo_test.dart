@@ -31,6 +31,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> scrollToSave(WidgetTester tester) => tester.scrollUntilVisible(
+    find.text('Save'),
+    200,
+    scrollable: find
+        .byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down)
+        .last,
+  );
+
   Finder keepSwitch() => find.widgetWithText(SwitchListTile, 'Keep the box photo');
 
   testWidgets('the photo is not kept unless the person chooses to', (tester) async {
@@ -60,7 +68,7 @@ void main() {
     await tester.tap(keepSwitch());
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel('Photo of the box'), findsOneWidget);
-    await tester.ensureVisible(find.text('Save'));
+    await scrollToSave(tester);
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
@@ -83,7 +91,7 @@ void main() {
 
     await tester.tap(keepSwitch());
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Save'));
+    await scrollToSave(tester);
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 

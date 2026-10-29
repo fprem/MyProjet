@@ -2,15 +2,22 @@
 //
 // The camera, ML Kit and the encrypted file are Android-only, so here they
 // are stood in for: "taking a photo" picks the next sample box below, its
-// text goes through the real LabelParser, and the archive lives in memory.
+// text goes through the real LabelParser, its barcode through the real AIC
+// decoder, a drawing stands in for the photo, and everything lives in memory.
 //
 //   flutter build web -t lib/demo/demo_main.dart
 
+import 'dart:math';
+import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../app.dart';
 import '../data/archive_repository.dart';
 import '../data/archive_store.dart';
+import '../scan/aic_code.dart';
+import '../scan/medicine_catalog.dart';
 import '../scan/photo_scanner.dart';
 
 class _MemoryStore implements ArchiveStore {
@@ -52,14 +59,77 @@ const _sampleBoxes = <List<LabelLine>>[
   [LabelLine('xx??', 8)], // a blurry photo: nothing readable
 ];
 
-class _SampleReader implements MedicineScanner {
+/// The barcode on each sample box, when it is readable. Tachipirina's is its
+/// real AIC, 012745093, as Code 32.
+const _sampleBarcodes = <String?>[null, '0D4YD5', null, null];
+
+/// One line of AIFA's list, so the Tachipirina sample is found by barcode.
+final _catalog = AifaCatalog.fromTsv('012745093\tTachipirina\t500 mg\t20\tcompresse\n');
+
+class _SampleScanner implements MedicineScanner {
   final _parser = const LabelParser();
 
   @override
-  Future<LabelResult> scan(String imagePath) async {
+  Future<ScanResult> scan(String imagePath) async {
     await Future<void>.delayed(const Duration(milliseconds: 900));
-    return _parser.parse(_sampleBoxes[int.parse(imagePath)]);
+    final i = int.parse(imagePath);
+    final aic = switch (_sampleBarcodes[i]) {
+      final code? => AicCode.fromBarcode(code),
+      null => null,
+    };
+    final known = aic == null ? null : await _catalog.lookup(aic);
+    return ScanResult(
+      known ?? _parser.parse(_sampleBoxes[i]),
+      aic: aic,
+      fromCatalog: known != null,
+      photo: await _drawBox(_sampleBoxes[i]),
+    );
   }
+}
+
+/// A drawing of the box stands in for the photo: its lines of text, at their
+/// sizes and places.
+Future<Uint8List> _drawBox(List<LabelLine> lines) async {
+  const width = 600.0, height = 400.0;
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  canvas.drawRect(
+    const Rect.fromLTWH(0, 0, width, height),
+    Paint()..color = const Color(0xFF8A6A4F),
+  );
+  final box = RRect.fromRectAndRadius(
+    const Rect.fromLTWH(40, 40, width - 80, height - 80),
+    const Radius.circular(10),
+  );
+  canvas.drawRRect(box, Paint()..color = const Color(0xFFFDFDFB));
+  canvas.drawRect(
+    const Rect.fromLTWH(40, 40, 70, height - 80),
+    Paint()..color = const Color(0xFF8FE3CF),
+  );
+
+  final tops = [for (final l in lines) l.top ?? 0];
+  final minTop = tops.reduce(min),
+      maxBottom = [for (final l in lines) (l.top ?? 0) + l.height].reduce(max);
+  final tallest = lines.map((l) => l.height).reduce(max);
+  final span = max(maxBottom - minTop, tallest * 2);
+  for (final line in lines) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: line.text,
+        style: TextStyle(
+          color: const Color(0xFF14211F),
+          fontSize: 14 + 30 * line.height / tallest,
+          fontWeight: line.height == tallest ? FontWeight.w700 : FontWeight.w500,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: width - 180);
+    final y = 70 + ((line.top ?? 0) - minTop) / span * (height - 170);
+    painter.paint(canvas, Offset(130, y));
+  }
+  final image = await recorder.endRecording().toImage(width.toInt(), height.toInt());
+  final png = await image.toByteData(format: ui.ImageByteFormat.png);
+  return png!.buffer.asUint8List();
 }
 
 Future<void> main() async {
@@ -77,7 +147,7 @@ Future<void> main() async {
   runApp(
     MedicineArchiveApp(
       repository: repository,
-      scanner: _SampleReader(),
+      scanner: _SampleScanner(),
       takePhoto: () async => '${next++ % _sampleBoxes.length}',
     ),
   );

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../app.dart';
@@ -36,15 +38,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (path == null || !mounted) return;
 
     setState(() => _reading = true);
-    LabelResult result;
+    ScanResult result;
     String message;
     try {
       result = await widget.scanner.scan(path);
-      message = result.isEmpty
+      message = result.label.isEmpty
           ? "Couldn't read the label. Please type it in."
+          : result.fromCatalog
+          ? "Found from the barcode in AIFA's medicine list."
           : 'Check what was read and fix anything that is wrong.';
     } catch (_) {
-      result = const LabelResult.empty();
+      result = const ScanResult(LabelResult.empty());
       message = "Couldn't read the label. Please type it in.";
     }
     if (!mounted) return;
@@ -52,8 +56,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     await _openForm(
       title: 'Check medicine',
-      initial: result,
-      notice: [message, 'The photo has been deleted.'],
+      initial: result.label,
+      photo: result.photo,
+      notice: [
+        message,
+        result.photo == null
+            ? 'The photo has been deleted.'
+            : 'The photo is deleted when you save, unless you keep it.',
+      ],
     );
   }
 
@@ -61,12 +71,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String title,
     LabelResult initial = const LabelResult.empty(),
     List<String> notice = const [],
+    Uint8List? photo,
     Medicine? editing,
   }) async {
+    if (editing != null) photo = await _repo.photoOf(editing);
+    if (!mounted) return;
     final draft = await Navigator.push<MedicineDraft>(
       context,
       MaterialPageRoute(
-        builder: (_) => MedicineFormScreen(title: title, initial: initial, notice: notice),
+        builder: (_) => MedicineFormScreen(
+          title: title,
+          initial: initial,
+          notice: notice,
+          photo: photo,
+          keepPhoto: editing != null && photo != null,
+        ),
       ),
     );
     if (draft == null) return;
@@ -77,8 +96,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         strength: draft.strength,
         quantity: draft.quantity,
         unit: draft.unit,
+        photo: draft.keepPhoto ? photo : null,
       );
     } else {
+      if (editing.hasPhoto && !draft.keepPhoto) await _repo.removePhoto(editing.id);
       await _repo.updateMedicine(
         editing.copyWith(
           name: draft.name,
