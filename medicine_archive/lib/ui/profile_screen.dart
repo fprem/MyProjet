@@ -8,6 +8,7 @@ import '../scan/barcode_scan.dart';
 import '../scan/photo_scanner.dart';
 import 'brand.dart';
 import 'empty_state.dart';
+import 'fitted_name.dart';
 import 'medicine_form_screen.dart';
 
 /// One person's medicines, with Scan box as the main action.
@@ -340,9 +341,9 @@ class _MedicineCard extends StatelessWidget {
             child: Icon(Icons.medication_rounded, color: scheme.primary),
           ),
         ),
-        title: Text(
+        title: FittedName(
           medicine.name,
-          style: theme.textTheme.titleLarge?.copyWith(color: scheme.onSurface),
+          style: theme.textTheme.titleLarge!.copyWith(color: scheme.onSurface),
         ),
         subtitle: !hasDetails
             ? null

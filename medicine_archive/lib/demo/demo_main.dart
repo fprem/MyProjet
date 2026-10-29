@@ -152,6 +152,15 @@ Future<void> main() async {
     quantity: 10,
     unit: 'compresse',
   );
+  // Long names shrink to fit, or wrap between words.
+  await repository.addMedicine(anna.id, name: 'Delorazepam Ratiopharm', strength: '1 mg');
+  await repository.addMedicine(
+    anna.id,
+    name: 'Amoxicillina e Acido Clavulanico Sandoz',
+    strength: '875 mg + 125 mg',
+    quantity: 12,
+    unit: 'compresse',
+  );
   // A finished antibiotic course, so the Archived tab has something in it.
   final augmentin = await repository.addMedicine(
     anna.id,
