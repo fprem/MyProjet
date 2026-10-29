@@ -87,8 +87,8 @@ class _SampleScanner implements MedicineScanner {
   }
 }
 
-/// A drawing of the box stands in for the photo: its lines of text, at their
-/// sizes and places.
+/// A drawing of the box stands in for the photo: its lines of text, top to
+/// bottom, the taller ones larger.
 Future<Uint8List> _drawBox(List<LabelLine> lines) async {
   const width = 600.0, height = 400.0;
   final recorder = ui.PictureRecorder();
@@ -107,25 +107,25 @@ Future<Uint8List> _drawBox(List<LabelLine> lines) async {
     Paint()..color = const Color(0xFF8FE3CF),
   );
 
-  final tops = [for (final l in lines) l.top ?? 0];
-  final minTop = tops.reduce(min),
-      maxBottom = [for (final l in lines) (l.top ?? 0) + l.height].reduce(max);
+  final ordered = [...lines]..sort((a, b) => (a.top ?? 0).compareTo(b.top ?? 0));
   final tallest = lines.map((l) => l.height).reduce(max);
-  final span = max(maxBottom - minTop, tallest * 2);
-  for (final line in lines) {
+  var y = 64.0;
+  for (final line in ordered) {
     final painter = TextPainter(
       text: TextSpan(
         text: line.text,
         style: TextStyle(
           color: const Color(0xFF14211F),
-          fontSize: 14 + 30 * line.height / tallest,
-          fontWeight: line.height == tallest ? FontWeight.w700 : FontWeight.w500,
+          fontFamily: 'Figtree',
+          fontSize: 13 + 17 * line.height / tallest,
+          fontWeight: line.height > tallest * 0.6 ? FontWeight.w700 : FontWeight.w500,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: width - 180);
-    final y = 70 + ((line.top ?? 0) - minTop) / span * (height - 170);
+    if (y + painter.height > height - 50) break;
     painter.paint(canvas, Offset(130, y));
+    y += painter.height + 2;
   }
   final image = await recorder.endRecording().toImage(width.toInt(), height.toInt());
   final png = await image.toByteData(format: ui.ImageByteFormat.png);
