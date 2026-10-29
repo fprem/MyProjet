@@ -195,4 +195,27 @@ void main() {
       expect(latin1.decode(await file.readAsBytes()), isNot(contains('0,5 mg')));
     });
   });
+
+  group('only the name is required', () {
+    test('a medicine can be saved with just its name', () async {
+      final repo = await open();
+      final anna = await repo.createProfile('Anna');
+      await repo.addMedicine(anna.id, name: 'Delorazepam');
+      final med = repo.medicinesOf(anna.id).single;
+      expect(med.quantity, isNull);
+      expect(med.strength, isEmpty);
+      expect(med.quantityLabel, isEmpty);
+
+      final reopened = await open();
+      expect(reopened.medicinesOf(anna.id).single.quantity, isNull);
+    });
+
+    test('a known quantity can be cleared again', () async {
+      final repo = await open();
+      final anna = await repo.createProfile('Anna');
+      final med = await repo.addMedicine(anna.id, name: 'Delorazepam', quantity: 20);
+      await repo.updateMedicine(med.copyWith(quantity: null));
+      expect(repo.medicinesOf(anna.id).single.quantity, isNull);
+    });
+  });
 }

@@ -119,11 +119,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Add by hand'));
     await tester.pumpAndSettle();
-    expect(find.text('Required'), findsNWidgets(2));
+    // Only the name is required; strength and quantity are optional.
+    expect(find.text('Required'), findsOneWidget);
 
     await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Aspirina');
     await tester.pump();
-    expect(find.text('Required'), findsOneWidget);
+    expect(find.text('Required'), findsNothing);
   });
 
   testWidgets('the menu button has a clear name', (tester) async {

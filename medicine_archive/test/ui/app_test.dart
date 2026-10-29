@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medicine_archive/app.dart';
 import 'package:medicine_archive/data/archive_repository.dart';
 import 'package:medicine_archive/scan/label_parser.dart';
+import 'package:medicine_archive/ui/brand.dart';
 
 import 'fakes.dart';
 
@@ -220,5 +222,60 @@ void main() {
       expect(find.text('0,5 mg'), findsOneWidget);
       expect(find.text('1 mg'), findsOneWidget);
     });
+  });
+
+  group('only the name is required', () {
+    testWidgets('saves a medicine typed with only its name', (tester) async {
+      await pumpApp(tester);
+      await openProfile(tester, 'Anna');
+      await tester.tap(find.byTooltip('Add by hand'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Delorazepam');
+      await tester.pump();
+      final save = find.widgetWithText(FilledButton, 'Save');
+      expect(tester.widget<FilledButton>(save).onPressed, isNotNull);
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Delorazepam'), findsOneWidget);
+      expect(find.byType(QuantityPill), findsNothing);
+      expect(repo.medicinesOf(repo.profiles.single.id).single.quantity, isNull);
+    });
+
+    testWidgets('saves a scan where only the name was read', (tester) async {
+      await pumpApp(tester, scanner: FakeScanner(const LabelResult(name: 'Delorazepam')));
+      await openProfile(tester, 'Anna');
+      await tester.tap(find.text('Scan box'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(repo.medicinesOf(repo.profiles.single.id).single.name, 'Delorazepam');
+    });
+
+    testWidgets('clearing the quantity while editing saves it as unknown', (tester) async {
+      final anna = await repo.createProfile('Anna');
+      await repo.addMedicine(anna.id, name: 'Delorazepam', quantity: 20, unit: 'compresse');
+      await pumpApp(tester);
+      await tester.tap(find.text('Anna'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delorazepam'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, '20'), '');
+      await tester.pump();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(repo.medicinesOf(anna.id).single.quantity, isNull);
+    });
+  });
+
+  testWidgets('medicine names in the list are large and bold', (tester) async {
+    final anna = await repo.createProfile('Anna');
+    await repo.addMedicine(anna.id, name: 'Delorazepam', strength: '0,5 mg', quantity: 20);
+    await pumpApp(tester);
+    await tester.tap(find.text('Anna'));
+    await tester.pumpAndSettle();
+    final style = tester.renderObject<RenderParagraph>(find.text('Delorazepam')).text.style!;
+    expect(style.fontSize, greaterThanOrEqualTo(20));
+    expect(style.fontWeight!.value, greaterThanOrEqualTo(FontWeight.w600.value));
   });
 }
