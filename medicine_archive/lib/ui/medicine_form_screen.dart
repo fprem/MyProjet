@@ -5,14 +5,9 @@ import '../scan/label_parser.dart';
 
 /// What the person confirmed in the form.
 class MedicineDraft {
-  const MedicineDraft({
-    required this.name,
-    required this.quantity,
-    this.unit = '',
-    this.strength = '',
-  });
+  const MedicineDraft({required this.name, this.quantity, this.unit = '', this.strength = ''});
   final String name;
-  final int quantity;
+  final int? quantity;
   final String unit;
   final String strength;
 }
@@ -54,7 +49,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
 
   int? get _parsedQuantity => int.tryParse(_quantity.text.trim());
 
-  bool get _canSave => _name.text.trim().isNotEmpty && _parsedQuantity != null;
+  bool get _canSave => _name.text.trim().isNotEmpty;
 
   void _save() {
     Navigator.pop(
@@ -62,7 +57,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
       MedicineDraft(
         name: _name.text.trim(),
         strength: _strength.text.trim(),
-        quantity: _parsedQuantity!,
+        quantity: _parsedQuantity,
         unit: _unit.text.trim(),
       ),
     );
@@ -138,11 +133,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   style: theme.textTheme.titleMedium,
-                  decoration: InputDecoration(
-                    labelText: 'Quantity',
-                    helperText: _parsedQuantity == null ? 'Required' : null,
-                  ),
-                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(labelText: 'Quantity (optional)'),
                 ),
               ),
               const SizedBox(width: 12),

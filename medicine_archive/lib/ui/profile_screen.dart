@@ -153,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: 'No medicines yet',
                       message:
                           'Tap Scan box to photograph a medicine package. '
-                          'Only the name and quantity are kept, encrypted on this phone.',
+                          'Only what you check and save is kept, encrypted on this phone.',
                     ),
                   );
                 }
@@ -209,7 +209,9 @@ class _MedicineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final hasDetails = medicine.strength.isNotEmpty || medicine.quantity != null;
     return Card(
       child: ListTile(
         minTileHeight: 84,
@@ -225,21 +227,26 @@ class _MedicineCard extends StatelessWidget {
             child: Icon(Icons.medication_rounded, color: scheme.primary),
           ),
         ),
-        title: Text(medicine.name),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                if (medicine.strength.isNotEmpty) StrengthTag(medicine.strength),
-                QuantityPill(medicine.quantityLabel),
-              ],
-            ),
-          ),
+        title: Text(
+          medicine.name,
+          style: theme.textTheme.titleLarge?.copyWith(color: scheme.onSurface),
         ),
+        subtitle: !hasDetails
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      if (medicine.strength.isNotEmpty) StrengthTag(medicine.strength),
+                      if (medicine.quantity != null) QuantityPill(medicine.quantityLabel),
+                    ],
+                  ),
+                ),
+              ),
         trailing: IconButton(
           tooltip: 'Delete ${medicine.name}',
           icon: Icon(Icons.delete_outline_rounded, color: scheme.onSurfaceVariant),

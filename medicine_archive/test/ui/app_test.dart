@@ -128,7 +128,7 @@ void main() {
       await tester.tap(find.byTooltip('Add by hand'));
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Aspirina');
-      await tester.enterText(find.widgetWithText(TextField, 'Quantity'), '10');
+      await tester.enterText(find.widgetWithText(TextField, 'Quantity (optional)'), '10');
       await tester.pump();
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
@@ -194,7 +194,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Delorazepam');
       await tester.enterText(find.widgetWithText(TextField, 'Strength (optional)'), '1 mg');
-      await tester.enterText(find.widgetWithText(TextField, 'Quantity'), '20');
+      await tester.enterText(find.widgetWithText(TextField, 'Quantity (optional)'), '20');
       await tester.pump();
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();

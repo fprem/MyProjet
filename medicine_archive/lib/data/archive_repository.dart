@@ -56,7 +56,7 @@ class ArchiveRepository extends ChangeNotifier {
   Future<Medicine> addMedicine(
     String profileId, {
     required String name,
-    required int quantity,
+    int? quantity,
     String unit = '',
     String strength = '',
   }) async {
@@ -91,7 +91,7 @@ class ArchiveRepository extends ChangeNotifier {
   }
 
   Medicine _validate(Medicine m) {
-    if (m.quantity < 0) {
+    if (m.quantity case final q? when q < 0) {
       throw ArgumentError.value(m.quantity, 'quantity', 'Must not be negative');
     }
     return Medicine(
