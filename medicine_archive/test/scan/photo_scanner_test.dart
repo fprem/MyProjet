@@ -68,6 +68,29 @@ void main() {
     expect(photo.existsSync(), isFalse);
   });
 
+  group('live barcode', () {
+    test('looks an AIC up in the AIFA list', () async {
+      final scanner = PhotoScanner(reader: FakeReader(const []), catalog: _catalog);
+      final result = await scanner.lookup('012745093');
+      expect(result.fromCatalog, isTrue);
+      expect(result.aic, '012745093');
+      expect(result.label.name, 'Tachipirina');
+    });
+
+    test('an AIC that is not in the list gives an empty result', () async {
+      final scanner = PhotoScanner(reader: FakeReader(const []), catalog: _catalog);
+      final result = await scanner.lookup('034701021');
+      expect(result.fromCatalog, isFalse);
+      expect(result.label.isEmpty, isTrue);
+    });
+
+    test('reading an added photo keeps it in memory and deletes the file', () async {
+      final scanner = PhotoScanner(reader: FakeReader(const []));
+      expect(await scanner.readPhoto(photo.path), [1, 2, 3]);
+      expect(photo.existsSync(), isFalse);
+    });
+  });
+
   group('barcode', () {
     test('a known AIC barcode fills the form from the AIFA list', () async {
       final scanner = PhotoScanner(

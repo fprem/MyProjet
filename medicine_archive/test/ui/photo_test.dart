@@ -105,12 +105,15 @@ void main() {
     expect(find.text('The photo has been deleted.'), findsOneWidget);
   });
 
-  testWidgets('says when the medicine was found from its barcode', (tester) async {
+  testWidgets('says when the medicine was found from the barcode in the photo', (tester) async {
     await pumpProfile(
       tester,
-      FakeScanner(const LabelResult(name: 'Tachipirina'), fromCatalog: true),
+      FakeScanner(const LabelResult(name: 'Tachipirina'), fromCatalog: true, aic: '012745093'),
     );
     await scan(tester);
-    expect(find.text("Found from the barcode in AIFA's medicine list."), findsOneWidget);
+    expect(
+      find.text("From the barcode in the photo: AIC 012745093, found in AIFA's medicine list."),
+      findsOneWidget,
+    );
   });
 }

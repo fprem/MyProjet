@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -13,6 +14,12 @@ class SlowScanner implements MedicineScanner {
 
   @override
   Future<ScanResult> scan(String imagePath) => completer.future;
+
+  @override
+  Future<ScanResult> lookup(String aic) async => ScanResult(const LabelResult.empty(), aic: aic);
+
+  @override
+  Future<Uint8List?> readPhoto(String imagePath) async => null;
 }
 
 void main() {

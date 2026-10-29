@@ -18,18 +18,42 @@ class MemoryStore implements ArchiveStore {
 Future<ArchiveRepository> memoryRepository() => ArchiveRepository.open(MemoryStore());
 
 class FakeScanner implements MedicineScanner {
-  FakeScanner(this.result, {this.fail = false, this.photo, this.fromCatalog = false});
+  FakeScanner(
+    this.result, {
+    this.fail = false,
+    this.photo,
+    this.fromCatalog = false,
+    this.aic,
+    this.catalog = const {},
+  });
   final LabelResult result;
   final bool fail;
   final Uint8List? photo;
   final bool fromCatalog;
+  final String? aic;
+
+  /// What [lookup] finds, by AIC.
+  final Map<String, LabelResult> catalog;
   final scanned = <String>[];
+  final photosRead = <String>[];
 
   @override
   Future<ScanResult> scan(String imagePath) async {
     scanned.add(imagePath);
     if (fail) throw Exception('ocr failed');
-    return ScanResult(result, photo: photo, fromCatalog: fromCatalog);
+    return ScanResult(result, photo: photo, fromCatalog: fromCatalog, aic: aic);
+  }
+
+  @override
+  Future<ScanResult> lookup(String aic) async {
+    final known = catalog[aic];
+    return ScanResult(known ?? const LabelResult.empty(), aic: aic, fromCatalog: known != null);
+  }
+
+  @override
+  Future<Uint8List?> readPhoto(String imagePath) async {
+    photosRead.add(imagePath);
+    return photo;
   }
 }
 
