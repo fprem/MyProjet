@@ -1,14 +1,31 @@
 import 'package:flutter/material.dart';
 
-/// The "?" on the scan screen. Opens [showBarcodeHelp].
+import 'brand.dart';
+
+/// The "? Help" on the scan screen. Opens [showBarcodeHelp].
+///
+/// Its colours are fixed, not taken from the theme, because the scan screen
+/// is black in light and dark mode alike.
 class BarcodeHelpButton extends StatelessWidget {
   const BarcodeHelpButton({super.key});
 
   @override
-  Widget build(BuildContext context) => IconButton(
-    tooltip: 'Which barcode?',
-    icon: const Icon(Icons.help_outline_rounded),
-    onPressed: () => showBarcodeHelp(context),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(right: 8),
+    child: Tooltip(
+      message: 'Which barcode?',
+      child: FilledButton.icon(
+        style: FilledButton.styleFrom(
+          backgroundColor: Brand.mint,
+          foregroundColor: Brand.ink,
+          minimumSize: const Size(48, 48),
+          tapTargetSize: MaterialTapTargetSize.padded,
+        ),
+        onPressed: () => showBarcodeHelp(context),
+        icon: const Icon(Icons.help_rounded),
+        label: const Text('Help'),
+      ),
+    ),
   );
 }
 
