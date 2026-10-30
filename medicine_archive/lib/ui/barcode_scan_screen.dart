@@ -4,6 +4,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../scan/aic_code.dart';
 import '../scan/barcode_scan.dart';
 import '../scan/photo_barcode_reader.dart';
+import 'barcode_help.dart';
 
 /// Opens [BarcodeScanScreen] and returns how it ended.
 Future<BarcodeScan?> scanBarcodeLive(BuildContext context) => Navigator.push<BarcodeScan>(
@@ -51,6 +52,7 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen> {
         title: const Text('Scan the barcode'),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
+        actions: const [BarcodeHelpButton()],
       ),
       body: Stack(
         fit: StackFit.expand,

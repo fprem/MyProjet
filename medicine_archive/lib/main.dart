@@ -13,6 +13,7 @@ import 'scan/aifa_asset_catalog.dart';
 import 'scan/photo_barcode_reader.dart';
 import 'scan/mlkit_label_reader.dart';
 import 'scan/photo_scanner.dart';
+import 'security/device_lock.dart';
 import 'ui/barcode_scan_screen.dart';
 
 Future<void> main() async {
@@ -41,6 +42,7 @@ Future<void> main() async {
         catalog: bundledAifaCatalog(),
       ),
       scanBarcode: scanBarcodeLive,
+      authenticate: deviceLock(),
       takePhoto: () async {
         final photo = await picker.pickImage(
           source: ImageSource.camera,

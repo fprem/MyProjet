@@ -31,11 +31,23 @@ android {
         versionName = flutter.versionName
     }
 
+    // The release key comes from the environment (in CI, from the repository's
+    // secrets). Without it the build is signed with the debug key, as before.
+    val releaseKeystore = System.getenv("MEDICINE_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("MEDICINE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("MEDICINE_KEY_ALIAS") ?: "medicine-archive"
+                keyPassword = System.getenv("MEDICINE_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -43,4 +55,9 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // AppCompat themes, which the fingerprint prompt needs on Android 8 and older.
+    implementation("androidx.appcompat:appcompat:1.7.1")
 }

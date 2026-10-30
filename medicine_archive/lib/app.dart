@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'data/archive_repository.dart';
 import 'scan/barcode_scan.dart';
 import 'scan/photo_scanner.dart';
+import 'security/app_lock.dart';
 import 'ui/brand.dart';
 import 'ui/onboarding_screen.dart';
 import 'ui/profiles_screen.dart';
@@ -17,6 +18,7 @@ class MedicineArchiveApp extends StatelessWidget {
     required this.scanner,
     required this.takePhoto,
     this.scanBarcode,
+    this.authenticate,
     this.themeMode = ThemeMode.system,
   });
 
@@ -27,6 +29,9 @@ class MedicineArchiveApp extends StatelessWidget {
   /// Opens the live barcode scanner. Without one, Scan box goes straight
   /// to the camera.
   final ScanBarcode? scanBarcode;
+
+  /// Keeps the app behind the phone's lock. Without one the app is open.
+  final Authenticate? authenticate;
   final ThemeMode themeMode;
 
   @override
@@ -37,6 +42,9 @@ class MedicineArchiveApp extends StatelessWidget {
       themeMode: themeMode,
       theme: Brand.lightTheme(),
       darkTheme: Brand.darkTheme(),
+      builder: authenticate == null
+          ? null
+          : (context, child) => AppLock(authenticate: authenticate!, child: child!),
       home: ListenableBuilder(
         listenable: repository,
         builder: (context, _) => repository.needsOnboarding

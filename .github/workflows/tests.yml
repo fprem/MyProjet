@@ -40,7 +40,21 @@ jobs:
         with:
           name: medicine-archive-debug-apk
           path: medicine_archive/build/app/outputs/flutter-apk/app-debug.apk
+      # Sign with the fixed release key when the repository has it as a secret,
+      # so each new build installs over the last one.
+      - name: Get the release signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "MEDICINE_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret, so the APK is signed with the debug key."
+          fi
       - run: flutter build apk --release --split-per-abi
+        env:
+          MEDICINE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       # On every push, put the phone build on one pre-release so there is a
       # single link to download it from.
       - name: Publish the phone build

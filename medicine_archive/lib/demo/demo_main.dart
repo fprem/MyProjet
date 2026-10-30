@@ -20,6 +20,7 @@ import '../scan/aic_code.dart';
 import '../scan/barcode_scan.dart';
 import '../scan/medicine_catalog.dart';
 import '../scan/photo_scanner.dart';
+import '../ui/barcode_help.dart';
 
 class _MemoryStore implements ArchiveStore {
   Map<String, dynamic>? _data;
@@ -192,6 +193,7 @@ Future<BarcodeScan?> _sampleBarcodeScan(BuildContext context) => Navigator.push<
         title: const Text('Scan the barcode'),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
+        actions: const [BarcodeHelpButton()],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
