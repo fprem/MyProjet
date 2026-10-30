@@ -47,4 +47,28 @@ void main() {
     await expectLater(tester, meetsGuideline(textContrastGuideline));
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
   });
+
+  for (final dark in [false, true]) {
+    testWidgets('the help button stands out on the black scan bar (${dark ? 'dark' : 'light'})', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: dark ? Brand.darkTheme() : Brand.lightTheme(),
+          home: Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              actions: const [BarcodeHelpButton()],
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Help'), findsOneWidget);
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    });
+  }
 }
