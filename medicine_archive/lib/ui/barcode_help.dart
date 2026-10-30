@@ -77,6 +77,11 @@ class _BarcodeHelp extends StatelessWidget {
                 'skips it. If the box only has this one, take a photo instead.',
             wrong: true,
           ),
+          Text(
+            "Medicine names come from AIFA's open data (Agenzia Italiana del Farmaco), "
+            'adapted for the app. Licence: CC BY 4.0.',
+            style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
           FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Got it')),
         ],
       ),
