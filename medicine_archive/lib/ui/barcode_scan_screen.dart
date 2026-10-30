@@ -49,7 +49,7 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Scan the barcode'),
+        title: const Text('Scan barcode'),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         actions: const [BarcodeHelpButton()],

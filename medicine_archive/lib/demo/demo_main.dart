@@ -190,7 +190,7 @@ Future<BarcodeScan?> _sampleBarcodeScan(BuildContext context) => Navigator.push<
     builder: (context) => Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Scan the barcode'),
+        title: const Text('Scan barcode'),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         actions: const [BarcodeHelpButton()],
