@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
   push:
     tags: ["v*"]
+    branches: ["claude/project-thread-oxymi8"] # TEMP: check the workflow once
 jobs:
   bundle:
     runs-on: ubuntu-latest
