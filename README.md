@@ -1,3 +1,6 @@
+> This repo also holds **Medicine Archive**, an Android app in Flutter: see
+> [medicine_archive/README.md](medicine_archive/README.md).
+
 # Client Recap Tool
 
 Version 1 of the Client Recap Tool from the one-pager: turn a client call into

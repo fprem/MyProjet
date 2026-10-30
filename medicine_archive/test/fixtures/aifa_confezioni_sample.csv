@@ -1,0 +1,4 @@
+codice_aic;cod_farmaco;cod_confezione;denominazione;descrizione;codice_ditta;ragione_sociale;stato_amministrativo;tipo_procedura;forma;codice_atc;pa_associati;link
+012745093;012745;093;TACHIPIRINA;"""500 MG COMPRESSE"" 20 COMPRESSE";1234;ANGELINI S.P.A.;Autorizzata;Nazionale;COMPRESSA;N02BE01;PARACETAMOLO;
+34701021;034701;021;DELORAZEPAM RATIOPHARM ITALIA;"""0,5 MG COMPRESSE"" 20 COMPRESSE";5678;RATIOPHARM ITALIA S.R.L.;Autorizzata;Nazionale;COMPRESSA;N05BA;DELORAZEPAM;
+025201017;025201;017;BRUFEN;"""120 MG/5 ML SCIROPPO"" FLACONE 120 ML";9012;MYLAN S.P.A.;Autorizzata;Nazionale;SCIROPPO;M01AE01;IBUPROFENE;
