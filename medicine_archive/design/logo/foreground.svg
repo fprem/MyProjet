@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="512" height="512">
+  <!-- Medicine Archive mark: a capsule inside a camera viewfinder. -->
+  
+  <g fill="none" stroke="#8FE3CF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 40 V34 a4 4 0 0 1 4 -4 H40"/>
+    <path d="M68 30 H74 a4 4 0 0 1 4 4 V40"/>
+    <path d="M78 68 V74 a4 4 0 0 1 -4 4 H68"/>
+    <path d="M40 78 H34 a4 4 0 0 1 -4 -4 V68"/>
+  </g>
+  <g transform="rotate(-45 54 54)">
+    <path d="M54 44.5 H44 a9.5 9.5 0 0 0 0 19 H54 Z" fill="#FFFFFF"/>
+    <path d="M54 44.5 H64 a9.5 9.5 0 0 1 0 19 H54 Z" fill="#8FE3CF"/>
+  </g>
+</svg>
