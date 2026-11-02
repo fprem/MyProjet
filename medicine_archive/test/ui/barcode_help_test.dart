@@ -25,6 +25,14 @@ void main() {
     expect(find.bySemanticsLabel(RegExp('EAN-13')), findsWidgets);
   });
 
+  // AIFA's list is CC BY 4.0, which asks for the source to be named.
+  testWidgets('the help credits AIFA for the medicine list', (tester) async {
+    await openHelp(tester);
+
+    expect(find.textContaining('AIFA', findRichText: true), findsWidgets);
+    expect(find.textContaining('CC BY 4.0', findRichText: true), findsOneWidget);
+  });
+
   testWidgets('the help closes with Got it', (tester) async {
     await openHelp(tester);
     await tester.scrollUntilVisible(
