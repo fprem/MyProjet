@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
 import 'archive_store.dart';
+import 'backup.dart';
 import 'models.dart';
 import 'photo_store.dart';
 import 'tags.dart';
@@ -184,6 +186,60 @@ class ArchiveRepository extends ChangeNotifier {
     await _photos.delete(medicineId);
   }
 
+  static const _backupFormat = 'medicine-archive-backup';
+
+  /// Everything, kept photos included, for a backup file (see [BackupCodec]).
+  Future<Map<String, dynamic>> exportData() async => {
+    'format': _backupFormat,
+    'version': 1,
+    'profiles': _profiles.map((p) => p.toJson()).toList(),
+    'medicines': _medicines.map((m) => m.toJson()).toList(),
+    'photos': {
+      for (final m in _medicines.where((m) => m.hasPhoto))
+        if (await _photos.read(m.id) case final bytes?) m.id: base64Encode(bytes),
+    },
+  };
+
+  /// Replaces everything on this phone with a backup from [exportData].
+  /// Throws [BackupException], changing nothing, when it isn't one.
+  Future<void> importData(Map<String, dynamic> backup) async {
+    final List<Profile> profiles;
+    final List<Medicine> medicines;
+    final Map<String, Uint8List> photos;
+    try {
+      if (backup['format'] != _backupFormat) throw const FormatException();
+      profiles = [
+        for (final p in backup['profiles'] as List) Profile.fromJson(p as Map<String, dynamic>),
+      ];
+      medicines = [
+        for (final m in backup['medicines'] as List) Medicine.fromJson(m as Map<String, dynamic>),
+      ];
+      final ids = {for (final m in medicines) m.id};
+      photos = {
+        for (final MapEntry(:key, :value)
+            in (backup['photos'] as Map<String, dynamic>? ?? const {}).entries)
+          if (ids.contains(key) && _safeId.hasMatch(key)) key: base64Decode(value as String),
+      };
+    } catch (_) {
+      throw const BackupException("This file isn't a Medicine Archive backup.");
+    }
+    final gone = _medicines.where((m) => m.hasPhoto).map((m) => m.id).toList();
+    for (final id in gone) {
+      await _photos.delete(id);
+    }
+    for (final MapEntry(:key, :value) in photos.entries) {
+      await _photos.write(key, value);
+    }
+    _profiles
+      ..clear()
+      ..addAll(profiles);
+    _medicines
+      ..clear()
+      ..addAll(medicines.map((m) => m.copyWith(hasPhoto: photos.containsKey(m.id))));
+    _onboarded = true;
+    await _save();
+  }
+
   Medicine _validate(Medicine m) {
     if (m.quantity case final q? when q < 0) {
       throw ArgumentError.value(m.quantity, 'quantity', 'Must not be negative');
@@ -206,6 +262,8 @@ class ArchiveRepository extends ChangeNotifier {
     if (trimmed.isEmpty) throw ArgumentError.value(name, 'name', 'Must not be empty');
     return trimmed;
   }
+
+  static final _safeId = RegExp(r'^[A-Za-z0-9_-]+$');
 
   static final _random = Random.secure();
 
