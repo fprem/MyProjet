@@ -126,6 +126,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           photo: photo,
           keepPhoto: editing != null && photo != null,
           addPhoto: _addPhoto,
+          tags: editing?.tags ?? const [],
+          knownTags: _repo.customTagsOf(widget.profile.id),
         ),
       ),
     );
@@ -138,6 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         strength: draft.strength,
         quantity: draft.quantity,
         unit: draft.unit,
+        tags: draft.tags,
         photo: draft.keepPhoto ? draft.photo ?? photo : null,
       );
     } else {
@@ -152,6 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           strength: draft.strength,
           quantity: draft.quantity,
           unit: draft.unit,
+          tags: draft.tags,
         ),
       );
     }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'brand.dart';
+
+import '../data/tags.dart';
 import '../scan/label_parser.dart';
 
 /// What the person confirmed in the form.
@@ -12,6 +15,7 @@ class MedicineDraft {
     this.strength = '',
     this.keepPhoto = false,
     this.photo,
+    this.tags = const [],
   });
   final String name;
   final int? quantity;
@@ -24,6 +28,9 @@ class MedicineDraft {
   /// The photo shown in the form: the one it was opened with, or one the
   /// person added.
   final Uint8List? photo;
+
+  /// The tags picked: fixed ones first, then the person's own.
+  final List<String> tags;
 }
 
 /// Lets the person check or type a medicine's name and quantity. Pops with a
@@ -37,6 +44,8 @@ class MedicineFormScreen extends StatefulWidget {
     this.photo,
     this.keepPhoto = false,
     this.addPhoto,
+    this.tags = const [],
+    this.knownTags = const [],
   });
 
   final String title;
@@ -53,6 +62,12 @@ class MedicineFormScreen extends StatefulWidget {
   /// Takes a photo of the box, when there is none yet.
   final Future<Uint8List?> Function()? addPhoto;
 
+  /// The tags the medicine has when the form opens.
+  final List<String> tags;
+
+  /// The person's own tags already used in this profile, offered as chips.
+  final List<String> knownTags;
+
   @override
   State<MedicineFormScreen> createState() => _MedicineFormScreenState();
 }
@@ -64,6 +79,27 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
   late final _strength = TextEditingController(text: widget.initial.strength);
   late bool _keepPhoto = widget.keepPhoto;
   late Uint8List? _photo = widget.photo;
+  late final Set<String> _tags = {...widget.tags};
+  late final List<String> _custom = MedicineTags.normalize([
+    ...widget.knownTags,
+    ...widget.tags.where((t) => !MedicineTags.isFixed(t)),
+  ]);
+  final _newTag = TextEditingController();
+
+  void _toggle(String tag, bool on) => setState(() => on ? _tags.add(tag) : _tags.remove(tag));
+
+  /// Adds the typed tag and picks it. A tag already known, in any case, is
+  /// reused as it was first written.
+  void _addTag() {
+    final typed = _newTag.text.trim();
+    if (typed.isEmpty) return;
+    final known = _custom.where((t) => t.toLowerCase() == typed.toLowerCase()).firstOrNull;
+    setState(() {
+      if (known == null) _custom.add(typed);
+      _tags.add(known ?? typed);
+      _newTag.clear();
+    });
+  }
 
   Future<void> _takePhoto() async {
     final photo = await widget.addPhoto!();
@@ -80,6 +116,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
     _quantity.dispose();
     _unit.dispose();
     _strength.dispose();
+    _newTag.dispose();
     super.dispose();
   }
 
@@ -97,6 +134,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
         unit: _unit.text.trim(),
         keepPhoto: _photo != null && _keepPhoto,
         photo: _photo,
+        tags: MedicineTags.normalize(_tags),
       ),
     );
   }
@@ -187,6 +225,53 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 24),
+          _Label('When you take it'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final tag in MedicineTags.fixed)
+                FilterChip(
+                  avatar: _tags.contains(tag) ? null : Icon(tagIcon(tag), size: 18),
+                  label: Text(MedicineTags.label(tag)),
+                  selected: _tags.contains(tag),
+                  onSelected: (on) => _toggle(tag, on),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _Label('Your tags'),
+          if (_custom.isNotEmpty) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final tag in _custom)
+                  FilterChip(
+                    label: Text(tag),
+                    selected: _tags.contains(tag),
+                    onSelected: (on) => _toggle(tag, on),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+          TextField(
+            controller: _newTag,
+            textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _addTag(),
+            decoration: InputDecoration(
+              labelText: 'Add a tag',
+              hintText: 'e.g. When needed, Holiday',
+              suffixIcon: IconButton(
+                tooltip: 'Add tag',
+                icon: const Icon(Icons.add_rounded),
+                onPressed: _addTag,
+              ),
+            ),
+          ),
           if (_photo == null && widget.addPhoto != null) ...[
             const SizedBox(height: 20),
             OutlinedButton.icon(
@@ -252,6 +337,26 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _Label extends StatelessWidget {
+  const _Label(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Semantics(
+        header: true,
+        child: Text(
+          text,
+          style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
       ),
     );
   }
