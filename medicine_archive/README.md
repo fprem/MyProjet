@@ -15,6 +15,11 @@ read, and save it under the right profile.
   your own tags, such as "When needed". The list is grouped by tag, chips
   on top show one group, and holding a medicine lets you drag it to another
   group to change its tag (with Undo).
+- **Backup:** Export backup (menu on the profiles screen) saves every
+  profile, medicine, tag and kept photo in one file, encrypted with a
+  password you choose (PBKDF2 + AES-256-GCM). Import backup puts it back,
+  for example after reinstalling or on a new phone. Without a backup,
+  uninstalling the app deletes its data for good.
 - **Check before saving:** the guess always opens in a form to fix. If the
   label can't be read, the same form lets you type it.
 - **Photo deleted:** the photo file is deleted right after reading, whether

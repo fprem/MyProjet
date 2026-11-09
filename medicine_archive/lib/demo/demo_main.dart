@@ -21,6 +21,7 @@ import '../scan/aic_code.dart';
 import '../scan/barcode_scan.dart';
 import '../scan/medicine_catalog.dart';
 import '../scan/photo_scanner.dart';
+import '../ui/backup_flow.dart';
 import '../ui/barcode_help.dart';
 
 class _MemoryStore implements ArchiveStore {
@@ -194,6 +195,7 @@ Future<void> main() async {
       repository: repository,
       scanner: _SampleScanner(),
       scanBarcode: _sampleBarcodeScan,
+      backupFiles: _MemoryBackupFiles(),
       takePhoto: () async => '${next++ % _sampleBoxes.length}',
     ),
   );
@@ -238,3 +240,17 @@ Future<BarcodeScan?> _sampleBarcodeScan(BuildContext context) => Navigator.push<
     ),
   ),
 );
+
+/// Keeps the last exported backup in memory, so Import can open it again.
+class _MemoryBackupFiles implements BackupFiles {
+  Uint8List? _last;
+
+  @override
+  Future<bool> save(String fileName, Uint8List bytes) async {
+    _last = bytes;
+    return true;
+  }
+
+  @override
+  Future<Uint8List?> pick() async => _last;
+}
