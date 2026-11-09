@@ -52,14 +52,21 @@ jobs:
           else
             echo "::warning::No ANDROID_KEYSTORE_BASE64 secret, so the APK is signed with the debug key."
           fi
-      - run: flutter build apk --release --split-per-abi
+      # One version code for every build, test or release: minutes since 1970.
+      # It only goes up, so a newer APK always installs over an older one,
+      # and each Play upload is higher than the last.
+      - name: Pick the version code
+        run: echo "BUILD_NUMBER=$(( $(date +%s) / 60 ))" >> "$GITHUB_ENV"
+      # One APK for all phones. Split APKs get +1000, +2000 or +4000 added to
+      # their version code, which made the release APK look older.
+      - run: flutter build apk --release --build-number=$BUILD_NUMBER
         env:
           MEDICINE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       # Show which key signed the phone build, to check it is the release key.
       - name: Show the signing key
         run: |
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
-          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-arm64-v8a-release.apk | grep -E "DN|SHA-256"
+          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | grep -E "DN|SHA-256"
       # On every push, put the phone build on one pre-release so there is a
       # single link to download it from.
       - name: Publish the phone build
@@ -67,7 +74,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk medicine-archive.apk
+          cp build/app/outputs/flutter-apk/app-release.apk medicine-archive.apk
           gh release view medicine-archive-latest >/dev/null 2>&1 || gh release create medicine-archive-latest \
             --prerelease --target "$GITHUB_SHA" --title "Medicine Archive (latest test build)" \
             --notes "Test build of the Medicine Archive Android app, updated on every push. Install medicine-archive.apk on an Android 6.0+ phone."
