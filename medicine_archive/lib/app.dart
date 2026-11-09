@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'data/archive_repository.dart';
+import 'data/backup.dart';
 import 'scan/barcode_scan.dart';
 import 'scan/photo_scanner.dart';
 import 'security/app_lock.dart';
+import 'ui/backup_flow.dart';
 import 'ui/brand.dart';
 import 'ui/onboarding_screen.dart';
 import 'ui/profiles_screen.dart';
@@ -20,6 +22,8 @@ class MedicineArchiveApp extends StatelessWidget {
     this.scanBarcode,
     this.authenticate,
     this.themeMode = ThemeMode.system,
+    this.backupFiles,
+    this.backupCodec = const BackupCodec(),
   });
 
   final ArchiveRepository repository;
@@ -33,6 +37,11 @@ class MedicineArchiveApp extends StatelessWidget {
   /// Keeps the app behind the phone's lock. Without one the app is open.
   final Authenticate? authenticate;
   final ThemeMode themeMode;
+
+  /// Where backups are saved and opened from. Without it there is no
+  /// Export or Import.
+  final BackupFiles? backupFiles;
+  final BackupCodec backupCodec;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +63,8 @@ class MedicineArchiveApp extends StatelessWidget {
                 scanner: scanner,
                 takePhoto: takePhoto,
                 scanBarcode: scanBarcode,
+                backupFiles: backupFiles,
+                backupCodec: backupCodec,
               ),
       ),
     );

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../app.dart';
 import '../data/archive_repository.dart';
+import '../data/backup.dart';
 import '../scan/barcode_scan.dart';
 import '../scan/photo_scanner.dart';
+import 'backup_flow.dart';
 import 'brand.dart';
 import 'empty_state.dart';
 import 'profile_screen.dart';
@@ -15,12 +17,16 @@ class ProfilesScreen extends StatelessWidget {
     required this.scanner,
     required this.takePhoto,
     this.scanBarcode,
+    this.backupFiles,
+    this.backupCodec = const BackupCodec(),
   });
 
   final ArchiveRepository repository;
   final MedicineScanner scanner;
   final TakePhoto takePhoto;
   final ScanBarcode? scanBarcode;
+  final BackupFiles? backupFiles;
+  final BackupCodec backupCodec;
 
   Future<void> _createProfile(BuildContext context) async {
     final name = await showDialog<String>(
@@ -65,13 +71,38 @@ class ProfilesScreen extends StatelessWidget {
                   spacing: 12,
                   children: [LogoMark(size: 36), Text('Medicine Archive')],
                 ),
+                actions: [
+                  if (backupFiles case final files?)
+                    PopupMenuButton<void>(
+                      tooltip: 'More options',
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          onTap: () => exportBackup(context, repository, files, backupCodec),
+                          enabled: profiles.isNotEmpty,
+                          child: const Text('Export backup'),
+                        ),
+                        PopupMenuItem(
+                          onTap: () => importBackup(context, repository, files, backupCodec),
+                          child: const Text('Import backup'),
+                        ),
+                      ],
+                    ),
+                ],
               ),
               if (profiles.isEmpty)
-                const SliverFillRemaining(
+                SliverFillRemaining(
                   hasScrollBody: false,
                   child: EmptyState(
                     title: 'No profiles yet',
                     message: 'Create a profile for each person whose medicines you keep.',
+                    action: switch (backupFiles) {
+                      final files? => OutlinedButton.icon(
+                        onPressed: () => importBackup(context, repository, files, backupCodec),
+                        icon: const Icon(Icons.settings_backup_restore_rounded),
+                        label: const Text('Import a backup'),
+                      ),
+                      null => null,
+                    },
                   ),
                 )
               else ...[

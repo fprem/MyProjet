@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'brand.dart';
 
 class EmptyState extends StatelessWidget {
-  const EmptyState({super.key, required this.title, required this.message});
+  const EmptyState({super.key, required this.title, required this.message, this.action});
 
   final String title;
   final String message;
+
+  /// A button under the message, when there is something else to do.
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +36,7 @@ class EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
+            if (action case final action?) ...[const SizedBox(height: 16), action],
           ],
         ),
       ),

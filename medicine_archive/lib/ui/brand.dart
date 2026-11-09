@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../data/tags.dart';
+
 /// The app's look: deep teal and mint, Bricolage Grotesque for headings and
 /// Figtree for text. Everything visual comes from here.
 abstract final class Brand {
@@ -332,3 +334,13 @@ class _ScanPainter extends CustomPainter {
   @override
   bool shouldRepaint(_ScanPainter old) => old.t != t || old.frame != frame || old.box != box;
 }
+
+/// The icon of a tag group: the sun's path for the fixed ones, a label for
+/// the person's own, an empty tray for "No tag" (null).
+IconData tagIcon(String? tag) => switch (tag) {
+  MedicineTags.morning => Icons.wb_twilight_rounded,
+  MedicineTags.noon => Icons.wb_sunny_outlined,
+  MedicineTags.evening => Icons.bedtime_outlined,
+  null => Icons.inbox_outlined,
+  _ => Icons.label_outline_rounded,
+};

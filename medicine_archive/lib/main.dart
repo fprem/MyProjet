@@ -15,6 +15,7 @@ import 'scan/mlkit_label_reader.dart';
 import 'scan/photo_scanner.dart';
 import 'security/device_lock.dart';
 import 'ui/barcode_scan_screen.dart';
+import 'ui/device_backup_files.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +44,7 @@ Future<void> main() async {
       ),
       scanBarcode: scanBarcodeLive,
       authenticate: deviceLock(),
+      backupFiles: const DeviceBackupFiles(),
       takePhoto: () async {
         final photo = await picker.pickImage(
           source: ImageSource.camera,

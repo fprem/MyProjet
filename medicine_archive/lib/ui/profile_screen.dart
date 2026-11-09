@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../app.dart';
 import '../data/archive_repository.dart';
+import '../data/tags.dart';
 import '../scan/barcode_scan.dart';
 import '../scan/photo_scanner.dart';
 import 'brand.dart';
@@ -37,6 +38,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Which tab is shown: the medicines being taken, or the archived ones.
   bool _showArchived = false;
+
+  /// Which group the Taking tab shows: null for all of them, grouped.
+  ({String? tag})? _filter;
 
   ArchiveRepository get _repo => widget.repository;
 
@@ -114,6 +118,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Uint8List? photo,
     Medicine? editing,
   }) async {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     if (editing != null) photo = await _repo.photoOf(editing);
     if (!mounted) return;
     final draft = await Navigator.push<MedicineDraft>(
@@ -126,6 +131,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           photo: photo,
           keepPhoto: editing != null && photo != null,
           addPhoto: _addPhoto,
+          tags: editing?.tags ?? const [],
+          knownTags: _repo.customTagsOf(widget.profile.id),
         ),
       ),
     );
@@ -138,6 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         strength: draft.strength,
         quantity: draft.quantity,
         unit: draft.unit,
+        tags: draft.tags,
         photo: draft.keepPhoto ? draft.photo ?? photo : null,
       );
     } else {
@@ -152,6 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           strength: draft.strength,
           quantity: draft.quantity,
           unit: draft.unit,
+          tags: draft.tags,
         ),
       );
     }
@@ -180,6 +189,151 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  /// Moves a dragged medicine into the group of [to] (null: No tag).
+  Future<void> _move(_Dragged dragged, String? to) async {
+    if (dragged.from == to) return;
+    final medicine = dragged.medicine;
+    final before = await _repo.moveToTag(medicine.id, from: dragged.from, to: to);
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('${medicine.name} moved to ${MedicineTags.groupLabel(to)}'),
+        action: SnackBarAction(label: 'Undo', onPressed: () => _repo.setTags(medicine.id, before)),
+      ),
+    );
+  }
+
+  Widget _card(Medicine medicine, {String? group, bool draggable = false}) {
+    final card = _MedicineCard(
+      medicine: medicine,
+      otherTags: [
+        for (final t in medicine.tags)
+          if (t != group) t,
+      ],
+      showTags: group == null && !draggable,
+      onTap: () => _openForm(
+        title: 'Edit medicine',
+        editing: medicine,
+        initial: LabelResult(
+          name: medicine.name,
+          strength: medicine.strength,
+          quantity: medicine.quantity,
+          unit: medicine.unit,
+        ),
+      ),
+      onArchive: () => _setArchived(medicine, !medicine.archived),
+      onDelete: () => _deleteMedicine(medicine),
+    );
+    final item = !draggable
+        ? card
+        : LayoutBuilder(
+            builder: (context, constraints) => LongPressDraggable<_Dragged>(
+              data: _Dragged(medicine, group),
+              hapticFeedbackOnStart: true,
+              // The card hangs below the finger, so the group or chip under
+              // it stays in sight and lights up.
+              dragAnchorStrategy: (_, _, _) => Offset(constraints.maxWidth * 0.375, -20),
+              feedback: Material(
+                type: MaterialType.transparency,
+                child: SizedBox(
+                  width: constraints.maxWidth * 0.75,
+                  child: Transform.rotate(angle: -0.03, child: _Lifted(child: card)),
+                ),
+              ),
+              childWhenDragging: Opacity(opacity: 0.35, child: card),
+              child: card,
+            ),
+          );
+    return Padding(padding: const EdgeInsets.only(bottom: 10), child: item);
+  }
+
+  /// The Taking tab: chips to pick a group, then the medicines grouped by tag.
+  List<Widget> _taking(List<Medicine> taking) {
+    final groups = groupByTag(taking);
+    final hasTags = taking.any((m) => m.tags.isNotEmpty);
+    int count(String? tag) => groups.where((g) => g.tag == tag).firstOrNull?.medicines.length ?? 0;
+    final chipTags = <String?>[
+      ...MedicineTags.fixed,
+      for (final g in groups)
+        if (g.tag != null && !MedicineTags.isFixed(g.tag!)) g.tag,
+      if (hasTags) null,
+    ];
+    final filter = _filter;
+    final chips = SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        spacing: 8,
+        children: [
+          ChoiceChip(
+            key: const ValueKey('filter-all'),
+            label: Text('All (${taking.length})'),
+            selected: filter == null,
+            onSelected: (_) => setState(() => _filter = null),
+          ),
+          for (final tag in chipTags)
+            _DropZone(
+              tag: tag,
+              onDrop: _move,
+              shape: const StadiumBorder(),
+              child: ChoiceChip(
+                key: ValueKey('filter-${tag ?? 'none'}'),
+                avatar: filter?.tag == tag && filter != null ? null : Icon(tagIcon(tag), size: 18),
+                label: Text('${MedicineTags.groupLabel(tag)} (${count(tag)})'),
+                selected: filter != null && filter.tag == tag,
+                onSelected: (_) => setState(() => _filter = (tag: tag)),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    final List<Widget> list;
+    if (filter != null) {
+      final shown = groups.where((g) => g.tag == filter.tag).firstOrNull?.medicines ?? const [];
+      list = [
+        if (shown.isEmpty)
+          _Hint(
+            'Nothing here yet. Hold a medicine and drop it on this chip, or pick the tag in its form.',
+          ),
+        for (final m in shown) _card(m, group: filter.tag, draggable: true),
+      ];
+    } else if (!hasTags) {
+      list = [for (final m in taking) _card(m, draggable: true)];
+    } else {
+      list = [
+        for (final g in groups)
+          _DropZone(
+            key: ValueKey('section-${g.tag ?? 'none'}'),
+            tag: g.tag,
+            onDrop: _move,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _GroupHeader(tag: g.tag, count: g.medicines.length),
+                for (final m in g.medicines) _card(m, group: g.tag, draggable: true),
+              ],
+            ),
+          ),
+      ];
+    }
+    return [
+      SliverToBoxAdapter(child: chips),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+          child: _Hint('Hold a medicine and drag it to another group to change its tag.'),
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 112),
+        sliver: SliverList.list(children: list),
+      ),
+    ];
   }
 
   Future<void> _deleteProfile() async {
@@ -270,32 +424,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     'Only what you check and save is kept, encrypted on this phone.',
                               ),
                       )
-                    else
+                    else if (_showArchived)
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
-                        sliver: SliverList.list(
-                          children: [
-                            for (final medicine in medicines) ...[
-                              _MedicineCard(
-                                medicine: medicine,
-                                onTap: () => _openForm(
-                                  title: 'Edit medicine',
-                                  editing: medicine,
-                                  initial: LabelResult(
-                                    name: medicine.name,
-                                    strength: medicine.strength,
-                                    quantity: medicine.quantity,
-                                    unit: medicine.unit,
-                                  ),
-                                ),
-                                onArchive: () => _setArchived(medicine, !medicine.archived),
-                                onDelete: () => _deleteMedicine(medicine),
-                              ),
-                              const SizedBox(height: 10),
-                            ],
-                          ],
-                        ),
-                      ),
+                        sliver: SliverList.list(children: [for (final m in medicines) _card(m)]),
+                      )
+                    else
+                      ..._taking(medicines),
                   ],
                 );
               },
@@ -312,9 +447,17 @@ class _MedicineCard extends StatelessWidget {
     required this.onTap,
     required this.onArchive,
     required this.onDelete,
+    this.otherTags = const [],
+    this.showTags = false,
   });
 
   final Medicine medicine;
+
+  /// Its tags other than the group it is shown in, as small hints.
+  final List<String> otherTags;
+
+  /// Show [otherTags] as plain tags rather than "+ Evening" hints.
+  final bool showTags;
   final VoidCallback onTap;
 
   /// Archives the medicine, or restores it when it is archived.
@@ -325,7 +468,8 @@ class _MedicineCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final hasDetails = medicine.strength.isNotEmpty || medicine.quantity != null;
+    final hasDetails =
+        medicine.strength.isNotEmpty || medicine.quantity != null || otherTags.isNotEmpty;
     return Card(
       child: ListTile(
         minTileHeight: 84,
@@ -357,6 +501,8 @@ class _MedicineCard extends StatelessWidget {
                     children: [
                       if (medicine.strength.isNotEmpty) StrengthTag(medicine.strength),
                       if (medicine.quantity != null) QuantityPill(medicine.quantityLabel),
+                      for (final t in otherTags)
+                        _TagHint(showTags ? MedicineTags.label(t) : '+ ${MedicineTags.label(t)}'),
                     ],
                   ),
                 ),
@@ -410,4 +556,145 @@ class _Reading extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A medicine being dragged, and the group it was taken from.
+class _Dragged {
+  const _Dragged(this.medicine, this.from);
+  final Medicine medicine;
+  final String? from;
+}
+
+/// Where a dragged medicine can be dropped to get [tag] (null: No tag). It
+/// lights up while a medicine from another group is over it.
+class _DropZone extends StatelessWidget {
+  const _DropZone({
+    super.key,
+    required this.tag,
+    required this.onDrop,
+    required this.shape,
+    required this.child,
+  });
+
+  final String? tag;
+  final void Function(_Dragged dragged, String? to) onDrop;
+  final ShapeBorder shape;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return DragTarget<_Dragged>(
+      onWillAcceptWithDetails: (d) => d.data.from != tag,
+      onAcceptWithDetails: (d) => onDrop(d.data, tag),
+      builder: (context, candidates, _) {
+        final hot = candidates.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: ShapeDecoration(
+            color: hot ? scheme.primaryContainer : Colors.transparent,
+            shape: shape is StadiumBorder
+                ? StadiumBorder(
+                    side: BorderSide(color: hot ? scheme.primary : Colors.transparent, width: 3),
+                  )
+                : RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                    side: BorderSide(color: hot ? scheme.primary : Colors.transparent, width: 2),
+                  ),
+          ),
+          padding: shape is StadiumBorder
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(horizontal: 4),
+          child: child,
+        );
+      },
+    );
+  }
+}
+
+class _GroupHeader extends StatelessWidget {
+  const _GroupHeader({required this.tag, required this.count});
+  final String? tag;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Semantics(
+      header: true,
+      label: '${MedicineTags.groupLabel(tag)}, $count',
+      excludeSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 14, 4, 10),
+        child: Row(
+          spacing: 10,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(tagIcon(tag), size: 18, color: scheme.primary),
+            ),
+            Flexible(child: Text(MedicineTags.groupLabel(tag), style: theme.textTheme.titleMedium)),
+            Text(
+              '$count',
+              style: theme.textTheme.titleMedium?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One of a medicine's other tags, shown small on its card.
+class _TagHint extends StatelessWidget {
+  const _TagHint(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(text, style: theme.textTheme.labelMedium),
+    );
+  }
+}
+
+class _Hint extends StatelessWidget {
+  const _Hint(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      text,
+      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+    );
+  }
+}
+
+/// A card lifted off the list while it is dragged.
+class _Lifted extends StatelessWidget {
+  const _Lifted({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      boxShadow: const [BoxShadow(color: Color(0x47000000), blurRadius: 24, offset: Offset(0, 10))],
+    ),
+    child: child,
+  );
 }

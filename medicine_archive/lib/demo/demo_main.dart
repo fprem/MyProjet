@@ -16,10 +16,12 @@ import 'package:flutter/material.dart';
 import '../app.dart';
 import '../data/archive_repository.dart';
 import '../data/archive_store.dart';
+import '../data/tags.dart';
 import '../scan/aic_code.dart';
 import '../scan/barcode_scan.dart';
 import '../scan/medicine_catalog.dart';
 import '../scan/photo_scanner.dart';
+import '../ui/backup_flow.dart';
 import '../ui/barcode_help.dart';
 
 class _MemoryStore implements ArchiveStore {
@@ -152,15 +154,30 @@ Future<void> main() async {
     strength: '500 mg',
     quantity: 10,
     unit: 'compresse',
+    tags: ['When needed'],
+  );
+  await repository.addMedicine(
+    anna.id,
+    name: 'Eutirox',
+    strength: '50 mcg',
+    quantity: 50,
+    unit: 'compresse',
+    tags: [MedicineTags.morning],
   );
   // Long names shrink to fit, or wrap between words.
-  await repository.addMedicine(anna.id, name: 'Delorazepam Ratiopharm', strength: '1 mg');
+  await repository.addMedicine(
+    anna.id,
+    name: 'Delorazepam Ratiopharm',
+    strength: '1 mg',
+    tags: [MedicineTags.evening],
+  );
   await repository.addMedicine(
     anna.id,
     name: 'Amoxicillina e Acido Clavulanico Sandoz',
     strength: '875 mg + 125 mg',
     quantity: 12,
     unit: 'compresse',
+    tags: [MedicineTags.morning, MedicineTags.evening],
   );
   // A finished antibiotic course, so the Archived tab has something in it.
   final augmentin = await repository.addMedicine(
@@ -178,6 +195,7 @@ Future<void> main() async {
       repository: repository,
       scanner: _SampleScanner(),
       scanBarcode: _sampleBarcodeScan,
+      backupFiles: _MemoryBackupFiles(),
       takePhoto: () async => '${next++ % _sampleBoxes.length}',
     ),
   );
@@ -222,3 +240,17 @@ Future<BarcodeScan?> _sampleBarcodeScan(BuildContext context) => Navigator.push<
     ),
   ),
 );
+
+/// Keeps the last exported backup in memory, so Import can open it again.
+class _MemoryBackupFiles implements BackupFiles {
+  Uint8List? _last;
+
+  @override
+  Future<bool> save(String fileName, Uint8List bytes) async {
+    _last = bytes;
+    return true;
+  }
+
+  @override
+  Future<Uint8List?> pick() async => _last;
+}
