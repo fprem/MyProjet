@@ -145,6 +145,33 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
     final scheme = theme.colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
+      // Save stays in reach however long the form gets.
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FilledButton(onPressed: _canSave ? _save : null, child: const Text('Save')),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 6,
+                children: [
+                  Icon(Icons.lock_outline_rounded, size: 16, color: scheme.onSurfaceVariant),
+                  Flexible(
+                    child: Text(
+                      'Saved encrypted on this phone only.',
+                      style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
@@ -225,53 +252,6 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          _Label('When you take it'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final tag in MedicineTags.fixed)
-                FilterChip(
-                  avatar: _tags.contains(tag) ? null : Icon(tagIcon(tag), size: 18),
-                  label: Text(MedicineTags.label(tag)),
-                  selected: _tags.contains(tag),
-                  onSelected: (on) => _toggle(tag, on),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _Label('Your tags'),
-          if (_custom.isNotEmpty) ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final tag in _custom)
-                  FilterChip(
-                    label: Text(tag),
-                    selected: _tags.contains(tag),
-                    onSelected: (on) => _toggle(tag, on),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
-          TextField(
-            controller: _newTag,
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _addTag(),
-            decoration: InputDecoration(
-              labelText: 'Add a tag',
-              hintText: 'e.g. When needed, Holiday',
-              suffixIcon: IconButton(
-                tooltip: 'Add tag',
-                icon: const Icon(Icons.add_rounded),
-                onPressed: _addTag,
-              ),
-            ),
-          ),
           if (_photo == null && widget.addPhoto != null) ...[
             const SizedBox(height: 20),
             OutlinedButton.icon(
@@ -320,21 +300,52 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 28),
-          FilledButton(onPressed: _canSave ? _save : null, child: const Text('Save')),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 6,
+          const SizedBox(height: 24),
+          _Label('When you take it'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Icon(Icons.lock_outline_rounded, size: 16, color: scheme.onSurfaceVariant),
-              Flexible(
-                child: Text(
-                  'Saved encrypted on this phone only.',
-                  style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              for (final tag in MedicineTags.fixed)
+                FilterChip(
+                  avatar: _tags.contains(tag) ? null : Icon(tagIcon(tag), size: 18),
+                  label: Text(MedicineTags.label(tag)),
+                  selected: _tags.contains(tag),
+                  onSelected: (on) => _toggle(tag, on),
                 ),
-              ),
             ],
+          ),
+          const SizedBox(height: 16),
+          _Label('Your tags'),
+          if (_custom.isNotEmpty) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final tag in _custom)
+                  FilterChip(
+                    label: Text(tag),
+                    selected: _tags.contains(tag),
+                    onSelected: (on) => _toggle(tag, on),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+          TextField(
+            controller: _newTag,
+            textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _addTag(),
+            decoration: InputDecoration(
+              labelText: 'Add a tag',
+              hintText: 'e.g. When needed, Holiday',
+              suffixIcon: IconButton(
+                tooltip: 'Add tag',
+                icon: const Icon(Icons.add_rounded),
+                onPressed: _addTag,
+              ),
+            ),
           ),
         ],
       ),

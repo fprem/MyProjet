@@ -33,7 +33,8 @@ void main() {
   }
 
   Finder chip(String label) => find.widgetWithText(FilterChip, label);
-  bool selected(WidgetTester tester, String label) => tester.widget<FilterChip>(chip(label)).selected;
+  bool selected(WidgetTester tester, String label) =>
+      tester.widget<FilterChip>(chip(label)).selected;
 
   Future<void> addByHand(WidgetTester tester, String name) async {
     await tester.tap(find.byTooltip('Add by hand'));
@@ -47,7 +48,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the form offers Morning, Noon and Evening, and several can be picked', (tester) async {
+  testWidgets('the form offers Morning, Noon and Evening, and several can be picked', (
+    tester,
+  ) async {
     await pumpAnna(tester);
     await addByHand(tester, 'Metformina');
 

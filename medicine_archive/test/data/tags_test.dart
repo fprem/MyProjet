@@ -38,7 +38,14 @@ void main() {
 
     test('normalize trims, drops empty and repeated tags, and puts fixed ones first', () {
       expect(
-        MedicineTags.normalize([' Holiday ', MedicineTags.evening, '', 'holiday', MedicineTags.morning, MedicineTags.evening]),
+        MedicineTags.normalize([
+          ' Holiday ',
+          MedicineTags.evening,
+          '',
+          'holiday',
+          MedicineTags.morning,
+          MedicineTags.evening,
+        ]),
         [MedicineTags.morning, MedicineTags.evening, 'Holiday'],
       );
     });
@@ -77,7 +84,10 @@ void main() {
     });
 
     test('keeps the order of the medicines inside a group', () {
-      final groups = groupByTag([med('B', [MedicineTags.noon]), med('A', [MedicineTags.noon])]);
+      final groups = groupByTag([
+        med('B', [MedicineTags.noon]),
+        med('A', [MedicineTags.noon]),
+      ]);
       expect(groups.single.medicines.map((m) => m.name), ['B', 'A']);
     });
   });
@@ -86,10 +96,17 @@ void main() {
     test('a medicine is saved with its tags, encrypted, and they survive reopening', () async {
       final repo = await open();
       final anna = await repo.createProfile('Anna');
-      await repo.addMedicine(anna.id, name: 'Metformina', tags: [MedicineTags.evening, MedicineTags.morning]);
+      await repo.addMedicine(
+        anna.id,
+        name: 'Metformina',
+        tags: [MedicineTags.evening, MedicineTags.morning],
+      );
 
       final reopened = await open();
-      expect(reopened.medicinesOf(anna.id).single.tags, [MedicineTags.morning, MedicineTags.evening]);
+      expect(reopened.medicinesOf(anna.id).single.tags, [
+        MedicineTags.morning,
+        MedicineTags.evening,
+      ]);
       final raw = await File('${dir.path}/a.enc').readAsBytes();
       expect(String.fromCharCodes(raw).contains('morning'), isFalse);
     });
@@ -126,13 +143,21 @@ void main() {
       final before = await repo.moveToTag(m.id, from: MedicineTags.morning, to: MedicineTags.noon);
 
       expect(before, [MedicineTags.morning, MedicineTags.evening, 'Holiday']);
-      expect(repo.medicinesOf(anna.id).single.tags, [MedicineTags.noon, MedicineTags.evening, 'Holiday']);
+      expect(repo.medicinesOf(anna.id).single.tags, [
+        MedicineTags.noon,
+        MedicineTags.evening,
+        'Holiday',
+      ]);
     });
 
     test('moving to a group it is already in just leaves the old one', () async {
       final repo = await open();
       final anna = await repo.createProfile('Anna');
-      final m = await repo.addMedicine(anna.id, name: 'Metformina', tags: [MedicineTags.morning, MedicineTags.evening]);
+      final m = await repo.addMedicine(
+        anna.id,
+        name: 'Metformina',
+        tags: [MedicineTags.morning, MedicineTags.evening],
+      );
       await repo.moveToTag(m.id, from: MedicineTags.morning, to: MedicineTags.evening);
       expect(repo.medicinesOf(anna.id).single.tags, [MedicineTags.evening]);
     });
@@ -140,7 +165,11 @@ void main() {
     test('moving to "No tag" removes only the tag it came from', () async {
       final repo = await open();
       final anna = await repo.createProfile('Anna');
-      final m = await repo.addMedicine(anna.id, name: 'Metformina', tags: [MedicineTags.morning, MedicineTags.evening]);
+      final m = await repo.addMedicine(
+        anna.id,
+        name: 'Metformina',
+        tags: [MedicineTags.morning, MedicineTags.evening],
+      );
       await repo.moveToTag(m.id, from: MedicineTags.morning, to: null);
       expect(repo.medicinesOf(anna.id).single.tags, [MedicineTags.evening]);
     });

@@ -143,14 +143,15 @@ class ArchiveRepository extends ChangeNotifier {
   /// Moves a medicine from the group of tag [from] to the group of tag [to]
   /// (null is the "No tag" group): [from] is swapped for [to], and its other
   /// tags are kept. Returns the tags it had, for Undo.
-  Future<List<String>> moveToTag(String medicineId, {required String? from, required String? to}) async {
+  Future<List<String>> moveToTag(
+    String medicineId, {
+    required String? from,
+    required String? to,
+  }) async {
     final index = _medicines.indexWhere((m) => m.id == medicineId);
     if (index < 0) throw ArgumentError.value(medicineId, 'id', 'No such medicine');
     final before = _medicines[index].tags;
-    await setTags(medicineId, [
-      ...before.where((t) => t != from),
-      ?to,
-    ]);
+    await setTags(medicineId, [...before.where((t) => t != from), ?to]);
     return before;
   }
 
