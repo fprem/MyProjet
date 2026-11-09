@@ -4,6 +4,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../scan/aic_code.dart';
 import '../scan/barcode_scan.dart';
 import '../scan/photo_barcode_reader.dart';
+import '../l10n/l10n.dart';
 import 'barcode_help.dart';
 
 /// Opens [BarcodeScanScreen] and returns how it ended.
@@ -49,7 +50,7 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Scan barcode'),
+        title: Text(context.l10n.scanBarcode),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         actions: const [BarcodeHelpButton()],
@@ -80,14 +81,14 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen> {
                 spacing: 16,
                 children: [
                   Text(
-                    'Point the camera at the barcode on the box (the AIC code on the bollino).',
+                    context.l10n.pointCamera,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleMedium?.copyWith(color: Colors.white),
                   ),
                   FilledButton.tonalIcon(
                     onPressed: () => Navigator.pop(context, const UsePhotoInstead()),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: const Text('No barcode? Take a photo'),
+                    label: Text(context.l10n.noBarcodeTakePhoto),
                   ),
                 ],
               ),

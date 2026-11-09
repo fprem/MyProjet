@@ -20,6 +20,15 @@ read, and save it under the right profile.
   password you choose (PBKDF2 + AES-256-GCM). Import backup puts it back,
   for example after reinstalling or on a new phone. Without a backup,
   uninstalling the app deletes its data for good.
+- **Italian and English:** the app follows the phone's language (Italian,
+  otherwise English). On Android 13 and later it can also be set per app in
+  Settings > Apps > Medicine Archive > Language. The text lives in
+  `lib/l10n/app_en.arb` and `lib/l10n/app_it.arb`; `flutter pub get`
+  regenerates the Dart code from them.
+- **Back swipe:** pages follow Android's predictive back gesture, and going
+  back from a filled form asks before throwing it away.
+- **TalkBack:** each medicine on the Taking list has "Move to …" actions in
+  the TalkBack actions menu, the same move as dragging it.
 - **Check before saving:** the guess always opens in a form to fix. If the
   label can't be read, the same form lets you type it.
 - **Photo deleted:** the photo file is deleted right after reading, whether

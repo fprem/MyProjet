@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app.dart';
 import '../data/archive_repository.dart';
 import '../data/backup.dart';
+import '../l10n/l10n.dart';
 import '../scan/barcode_scan.dart';
 import '../scan/photo_scanner.dart';
 import 'backup_flow.dart';
@@ -52,13 +53,14 @@ class ProfilesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
         onPressed: () => _createProfile(context),
         icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: const Text('New profile'),
+        label: Text(l10n.newProfile),
       ),
       body: ListenableBuilder(
         listenable: repository,
@@ -67,23 +69,20 @@ class ProfilesScreen extends StatelessWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar.large(
-                title: const Row(
-                  spacing: 12,
-                  children: [LogoMark(size: 36), Text('Medicine Archive')],
-                ),
+                title: Row(spacing: 12, children: [const LogoMark(size: 36), Text(l10n.appTitle)]),
                 actions: [
                   if (backupFiles case final files?)
                     PopupMenuButton<void>(
-                      tooltip: 'More options',
+                      tooltip: l10n.moreOptions,
                       itemBuilder: (_) => [
                         PopupMenuItem(
                           onTap: () => exportBackup(context, repository, files, backupCodec),
                           enabled: profiles.isNotEmpty,
-                          child: const Text('Export backup'),
+                          child: Text(l10n.exportBackup),
                         ),
                         PopupMenuItem(
                           onTap: () => importBackup(context, repository, files, backupCodec),
-                          child: const Text('Import backup'),
+                          child: Text(l10n.importBackup),
                         ),
                       ],
                     ),
@@ -93,13 +92,13 @@ class ProfilesScreen extends StatelessWidget {
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: EmptyState(
-                    title: 'No profiles yet',
-                    message: 'Create a profile for each person whose medicines you keep.',
+                    title: l10n.noProfilesTitle,
+                    message: l10n.noProfilesMessage,
                     action: switch (backupFiles) {
                       final files? => OutlinedButton.icon(
                         onPressed: () => importBackup(context, repository, files, backupCodec),
                         icon: const Icon(Icons.settings_backup_restore_rounded),
-                        label: const Text('Import a backup'),
+                        label: Text(l10n.importABackup),
                       ),
                       null => null,
                     },
@@ -110,7 +109,7 @@ class ProfilesScreen extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                   sliver: SliverToBoxAdapter(
                     child: Text(
-                      'Profiles',
+                      l10n.profilesHeading,
                       style: theme.textTheme.titleSmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         letterSpacing: 0.4,
@@ -174,7 +173,7 @@ class _ProfileCard extends StatelessWidget {
           ),
         ),
         title: Text(profile.name, style: theme.textTheme.titleLarge),
-        subtitle: Text(count == 1 ? '1 medicine' : '$count medicines'),
+        subtitle: Text(context.l10n.medicineCount(count)),
         trailing: Icon(Icons.arrow_forward_rounded, color: scheme.onSurfaceVariant),
       ),
     );
@@ -203,22 +202,23 @@ class _NewProfileDialogState extends State<_NewProfileDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return AlertDialog(
-      title: const Text('New profile'),
+      title: Text(l10n.newProfile),
       content: TextField(
         controller: _name,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(labelText: 'Name'),
+        decoration: InputDecoration(labelText: l10n.nameLabel),
         onChanged: (_) => setState(() {}),
         onSubmitted: (_) => _submit(),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
         FilledButton(
           style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
           onPressed: _name.text.trim().isEmpty ? null : _submit,
-          child: const Text('Create'),
+          child: Text(l10n.create),
         ),
       ],
     );

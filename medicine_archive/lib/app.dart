@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/archive_repository.dart';
 import 'data/backup.dart';
+import 'l10n/l10n.dart';
 import 'scan/barcode_scan.dart';
 import 'scan/photo_scanner.dart';
 import 'security/app_lock.dart';
@@ -9,6 +11,9 @@ import 'ui/backup_flow.dart';
 import 'ui/brand.dart';
 import 'ui/onboarding_screen.dart';
 import 'ui/profiles_screen.dart';
+
+/// The widest the app gets, in dp, so lines stay short enough to read.
+const maxContentWidth = 720.0;
 
 /// Takes a photo and returns its file path, or null if the person cancelled.
 typedef TakePhoto = Future<String?> Function();
@@ -24,6 +29,7 @@ class MedicineArchiveApp extends StatelessWidget {
     this.themeMode = ThemeMode.system,
     this.backupFiles,
     this.backupCodec = const BackupCodec(),
+    this.locale,
   });
 
   final ArchiveRepository repository;
@@ -43,17 +49,40 @@ class MedicineArchiveApp extends StatelessWidget {
   final BackupFiles? backupFiles;
   final BackupCodec backupCodec;
 
+  /// The language to show. Null follows the phone (Italian or English).
+  final Locale? locale;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Medicine Archive',
+      onGenerateTitle: (context) => context.l10n.appTitle,
+      locale: locale,
+      supportedLocales: appLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       theme: Brand.lightTheme(),
       darkTheme: Brand.darkTheme(),
-      builder: authenticate == null
-          ? null
-          : (context, child) => AppLock(authenticate: authenticate!, child: child!),
+      builder: (context, child) {
+        final app = authenticate == null
+            ? child!
+            : AppLock(authenticate: authenticate!, child: child!);
+        // On a tablet or an unfolded phone the app stays one readable column.
+        return ColoredBox(
+          color: Theme.of(context).colorScheme.surface,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: maxContentWidth),
+              child: app,
+            ),
+          ),
+        );
+      },
       home: ListenableBuilder(
         listenable: repository,
         builder: (context, _) => repository.needsOnboarding

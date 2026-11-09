@@ -65,6 +65,8 @@ void main() {
     );
     await scan(tester);
 
+    await tester.ensureVisible(keepSwitch());
+    await tester.pumpAndSettle();
     await tester.tap(keepSwitch());
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel('Photo of the box'), findsOneWidget);

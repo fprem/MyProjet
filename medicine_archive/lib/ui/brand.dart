@@ -118,7 +118,11 @@ abstract final class Brand {
         shape: RoundedRectangleBorder(borderRadius: rounded16),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {TargetPlatform.android: FadeForwardsPageTransitionsBuilder()},
+        builders: {
+          // Follows a back swipe and lets it be cancelled; a plain tap on
+          // back fades forward as before.
+          TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+        },
       ),
     );
   }

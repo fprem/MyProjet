@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
+import 'l10n/l10n.dart';
 import 'data/archive_repository.dart';
 import 'data/encrypted_file_store.dart';
 import 'data/key_provider.dart';
@@ -29,7 +30,7 @@ Future<void> main() async {
   try {
     repository = await ArchiveRepository.open(store, photos: photos);
   } on ArchiveDecryptionException catch (e) {
-    runApp(_ErrorApp(message: "The archive couldn't be opened. ${e.message}."));
+    runApp(_ErrorApp(message: systemL10n().archiveCantOpen(e.message)));
     return;
   }
 
@@ -43,7 +44,7 @@ Future<void> main() async {
         catalog: bundledAifaCatalog(),
       ),
       scanBarcode: scanBarcodeLive,
-      authenticate: deviceLock(),
+      authenticate: deviceLock(reason: () => systemL10n().unlockReason),
       backupFiles: const DeviceBackupFiles(),
       takePhoto: () async {
         final photo = await picker.pickImage(
