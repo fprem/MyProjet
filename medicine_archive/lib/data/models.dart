@@ -20,6 +20,7 @@ class Medicine {
     this.strength = '',
     this.hasPhoto = false,
     this.archived = false,
+    this.tags = const [],
   });
 
   final String id;
@@ -45,6 +46,10 @@ class Medicine {
   /// apart from the current list.
   final bool archived;
 
+  /// When it is taken (the fixed tags in `MedicineTags`) and the
+  /// person's own tags, as typed. Empty when it has none.
+  final List<String> tags;
+
   /// "20 compresse", just "20" when the unit is unknown, or empty when the
   /// quantity is unknown.
   String get quantityLabel {
@@ -62,6 +67,7 @@ class Medicine {
     String? strength,
     bool? hasPhoto,
     bool? archived,
+    List<String>? tags,
   }) => Medicine(
     id: id,
     profileId: profileId,
@@ -71,6 +77,7 @@ class Medicine {
     strength: strength ?? this.strength,
     hasPhoto: hasPhoto ?? this.hasPhoto,
     archived: archived ?? this.archived,
+    tags: tags ?? this.tags,
   );
 
   Map<String, dynamic> toJson() => {
@@ -82,6 +89,7 @@ class Medicine {
     'strength': strength,
     'hasPhoto': hasPhoto,
     'archived': archived,
+    'tags': tags,
   };
 
   factory Medicine.fromJson(Map<String, dynamic> json) => Medicine(
@@ -93,5 +101,6 @@ class Medicine {
     strength: json['strength'] as String? ?? '',
     hasPhoto: json['hasPhoto'] as bool? ?? false,
     archived: json['archived'] as bool? ?? false,
+    tags: (json['tags'] as List?)?.cast<String>() ?? const [],
   );
 }

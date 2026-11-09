@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'archive_store.dart';
 import 'models.dart';
 import 'photo_store.dart';
+import 'tags.dart';
 
 export 'models.dart';
 
@@ -78,6 +79,7 @@ class ArchiveRepository extends ChangeNotifier {
     int? quantity,
     String unit = '',
     String strength = '',
+    List<String> tags = const [],
     Uint8List? photo,
   }) async {
     if (!_profiles.any((p) => p.id == profileId)) {
@@ -91,6 +93,7 @@ class ArchiveRepository extends ChangeNotifier {
         quantity: quantity,
         unit: unit,
         strength: strength,
+        tags: tags,
         hasPhoto: photo != null,
       ),
     );
@@ -129,6 +132,39 @@ class ArchiveRepository extends ChangeNotifier {
     await _save();
   }
 
+  /// Replaces the tags of a medicine.
+  Future<void> setTags(String medicineId, List<String> tags) async {
+    final index = _medicines.indexWhere((m) => m.id == medicineId);
+    if (index < 0) throw ArgumentError.value(medicineId, 'id', 'No such medicine');
+    _medicines[index] = _medicines[index].copyWith(tags: MedicineTags.normalize(tags));
+    await _save();
+  }
+
+  /// Moves a medicine from the group of tag [from] to the group of tag [to]
+  /// (null is the "No tag" group): [from] is swapped for [to], and its other
+  /// tags are kept. Returns the tags it had, for Undo.
+  Future<List<String>> moveToTag(String medicineId, {required String? from, required String? to}) async {
+    final index = _medicines.indexWhere((m) => m.id == medicineId);
+    if (index < 0) throw ArgumentError.value(medicineId, 'id', 'No such medicine');
+    final before = _medicines[index].tags;
+    await setTags(medicineId, [
+      ...before.where((t) => t != from),
+      ?to,
+    ]);
+    return before;
+  }
+
+  /// The custom tags used by a profile's medicines, archived ones too, A–Z.
+  List<String> customTagsOf(String profileId) {
+    final tags = <String>[];
+    for (final m in _medicines.where((m) => m.profileId == profileId)) {
+      for (final t in m.tags.where((t) => !MedicineTags.isFixed(t))) {
+        if (!tags.any((c) => c.toLowerCase() == t.toLowerCase())) tags.add(t);
+      }
+    }
+    return tags..sort(MedicineTags.compareCustom);
+  }
+
   /// Keeps [bytes] as the photo of a medicine's box, encrypted.
   Future<void> setPhoto(String medicineId, Uint8List bytes) async {
     final index = _medicines.indexWhere((m) => m.id == medicineId);
@@ -160,6 +196,7 @@ class ArchiveRepository extends ChangeNotifier {
       strength: m.strength.trim(),
       hasPhoto: m.hasPhoto,
       archived: m.archived,
+      tags: MedicineTags.normalize(m.tags),
     );
   }
 
