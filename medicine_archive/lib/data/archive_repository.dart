@@ -221,7 +221,7 @@ class ArchiveRepository extends ChangeNotifier {
           if (ids.contains(key) && _safeId.hasMatch(key)) key: base64Decode(value as String),
       };
     } catch (_) {
-      throw const BackupException("This file isn't a Medicine Archive backup.");
+      throw const BackupException.notBackup();
     }
     final gone = _medicines.where((m) => m.hasPhoto).map((m) => m.id).toList();
     for (final id in gone) {

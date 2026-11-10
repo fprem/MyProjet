@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../ui/brand.dart';
 
 /// Asks for the fingerprint, face or device PIN. True when the person passed.
@@ -100,6 +101,7 @@ class _LockedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -111,12 +113,12 @@ class _LockedScreen extends StatelessWidget {
               children: [
                 const LogoMark(size: 88),
                 Text(
-                  'Medicine Archive is locked',
+                  l10n.lockedTitle,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineSmall,
                 ),
                 Text(
-                  'Use your fingerprint, face or phone PIN to open it.',
+                  l10n.lockedMessage,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -125,7 +127,7 @@ class _LockedScreen extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onUnlock,
                   icon: const Icon(Icons.fingerprint_rounded),
-                  label: const Text('Unlock'),
+                  label: Text(l10n.unlock),
                 ),
               ],
             ),

@@ -6,12 +6,13 @@ import 'app_lock.dart';
 ///
 /// When the phone has no lock set up there is nothing to check against, so
 /// the app opens, as the phone itself does.
-Authenticate deviceLock([LocalAuthentication? auth]) {
+/// [reason] is the line the phone shows on its prompt, in the phone's language.
+Authenticate deviceLock({LocalAuthentication? auth, String Function()? reason}) {
   final local = auth ?? LocalAuthentication();
   return () async {
     try {
       return await local.authenticate(
-        localizedReason: 'Unlock your medicine archive',
+        localizedReason: reason?.call() ?? 'Unlock your medicine archive',
         persistAcrossBackgrounding: true,
       );
     } on LocalAuthException catch (e) {

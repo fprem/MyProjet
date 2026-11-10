@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'brand.dart';
 
 import '../data/tags.dart';
+import '../l10n/l10n.dart';
 import '../scan/label_parser.dart';
 
 /// What the person confirmed in the form.
@@ -46,9 +47,14 @@ class MedicineFormScreen extends StatefulWidget {
     this.addPhoto,
     this.tags = const [],
     this.knownTags = const [],
+    this.editing = false,
   });
 
   final String title;
+
+  /// The form edits a saved medicine, so leaving it asks only when something
+  /// was changed. A new one asks whenever anything was read or typed.
+  final bool editing;
   final LabelResult initial;
 
   /// Lines shown above the form, such as what happened to the photo.
@@ -124,6 +130,45 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
 
   bool get _canSave => _name.text.trim().isNotEmpty;
 
+  bool get _changed =>
+      _name.text != (widget.initial.name) ||
+      _strength.text != widget.initial.strength ||
+      _quantity.text != (widget.initial.quantity?.toString() ?? '') ||
+      _unit.text != widget.initial.unit ||
+      !_sameTags ||
+      !identical(_photo, widget.photo) ||
+      (_photo != null && _keepPhoto != widget.keepPhoto);
+
+  bool get _sameTags => _tags.length == widget.tags.length && _tags.containsAll(widget.tags);
+
+  bool get _hasContent =>
+      [_name, _strength, _quantity, _unit].any((c) => c.text.trim().isNotEmpty) ||
+      _tags.isNotEmpty ||
+      _photo != null;
+
+  /// Going back would lose something the person hasn't saved.
+  bool get _wouldLoseWork => widget.editing ? _changed : _hasContent;
+
+  Future<void> _confirmLeave() async {
+    final l10n = context.l10n;
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(widget.editing ? l10n.discardChangesTitle : l10n.discardNewTitle),
+        content: Text(widget.editing ? l10n.discardChangesMessage : l10n.discardNewMessage),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.keepEditing)),
+          FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.discard),
+          ),
+        ],
+      ),
+    );
+    if (discard == true && mounted) Navigator.pop(context);
+  }
+
   void _save() {
     Navigator.pop(
       context,
@@ -143,211 +188,215 @@ class _MedicineFormScreenState extends State<MedicineFormScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
-      // Save stays in reach however long the form gets.
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FilledButton(onPressed: _canSave ? _save : null, child: const Text('Save')),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 6,
-                children: [
-                  Icon(Icons.lock_outline_rounded, size: 16, color: scheme.onSurfaceVariant),
-                  Flexible(
-                    child: Text(
-                      'Saved encrypted on this phone only.',
-                      style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-        children: [
-          if (widget.notice.isNotEmpty) ...[
-            Card(
-              color: scheme.primaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    final l10n = context.l10n;
+    return PopScope(
+      canPop: !_wouldLoseWork,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmLeave();
+      },
+      child: Scaffold(
+        appBar: AppBar(title: Text(widget.title)),
+        // Save stays in reach however long the form gets.
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton(onPressed: _canSave ? _save : null, child: Text(l10n.save)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 6,
                   children: [
-                    Icon(Icons.verified_user_outlined, color: scheme.onPrimaryContainer),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 4,
-                        children: [
-                          for (final line in widget.notice)
-                            Text(
-                              line,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: scheme.onPrimaryContainer,
-                              ),
-                            ),
-                        ],
+                    Icon(Icons.lock_outline_rounded, size: 16, color: scheme.onSurfaceVariant),
+                    Flexible(
+                      child: Text(
+                        l10n.savedEncrypted,
+                        style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-          TextField(
-            controller: _name,
-            textCapitalization: TextCapitalization.sentences,
-            style: theme.textTheme.titleMedium,
-            decoration: InputDecoration(
-              labelText: 'Name',
-              helperText: _name.text.trim().isEmpty ? 'Required' : null,
-            ),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _strength,
-            style: theme.textTheme.titleMedium,
-            decoration: const InputDecoration(
-              labelText: 'Strength (optional)',
-              hintText: 'e.g. 500 mg',
-              helperText: 'Check it: 0,5 mg and 1 mg are different',
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _quantity,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: theme.textTheme.titleMedium,
-                  decoration: const InputDecoration(labelText: 'Quantity (optional)'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _unit,
-                  style: theme.textTheme.titleMedium,
-                  decoration: const InputDecoration(
-                    labelText: 'Unit (optional)',
-                    hintText: 'compresse, ml…',
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            if (widget.notice.isNotEmpty) ...[
+              Card(
+                color: scheme.primaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.verified_user_outlined, color: scheme.onPrimaryContainer),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 4,
+                          children: [
+                            for (final line in widget.notice)
+                              Text(
+                                line,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: scheme.onPrimaryContainer,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 24),
+            ],
+            TextField(
+              controller: _name,
+              textCapitalization: TextCapitalization.sentences,
+              style: theme.textTheme.titleMedium,
+              decoration: InputDecoration(
+                labelText: l10n.nameLabel,
+                helperText: _name.text.trim().isEmpty ? l10n.required : null,
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _strength,
+              style: theme.textTheme.titleMedium,
+              decoration: InputDecoration(
+                labelText: l10n.strengthField,
+                hintText: l10n.strengthHint,
+                helperText: l10n.strengthHelper,
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _quantity,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: theme.textTheme.titleMedium,
+                    decoration: InputDecoration(labelText: l10n.quantityField),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _unit,
+                    style: theme.textTheme.titleMedium,
+                    decoration: InputDecoration(labelText: l10n.unitField, hintText: l10n.unitHint),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+              ],
+            ),
+            if (_photo == null && widget.addPhoto != null) ...[
+              const SizedBox(height: 20),
+              OutlinedButton.icon(
+                onPressed: _takePhoto,
+                icon: const Icon(Icons.add_a_photo_outlined),
+                label: Text(l10n.addBoxPhoto),
               ),
             ],
-          ),
-          if (_photo == null && widget.addPhoto != null) ...[
-            const SizedBox(height: 20),
-            OutlinedButton.icon(
-              onPressed: _takePhoto,
-              icon: const Icon(Icons.add_a_photo_outlined),
-              label: const Text('Add a photo of the box'),
-            ),
-          ],
-          if (_photo case final photo?) ...[
-            const SizedBox(height: 20),
-            Card(
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SwitchListTile(
-                    value: _keepPhoto,
-                    onChanged: (v) => setState(() => _keepPhoto = v),
-                    title: const Text('Keep the box photo'),
-                    subtitle: const Text('Saved encrypted, shown on this page'),
-                    secondary: const Icon(Icons.photo_outlined),
-                  ),
-                  if (_keepPhoto)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.memory(
-                          photo,
-                          semanticLabel: 'Photo of the box',
-                          fit: BoxFit.contain,
-                          height: 280,
-                          errorBuilder: (_, _, _) => SizedBox(
-                            height: 80,
-                            child: Center(
-                              child: Text(
-                                "The photo can't be shown.",
-                                style: theme.textTheme.bodyMedium,
+            if (_photo case final photo?) ...[
+              const SizedBox(height: 20),
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SwitchListTile(
+                      value: _keepPhoto,
+                      onChanged: (v) => setState(() => _keepPhoto = v),
+                      title: Text(l10n.keepBoxPhoto),
+                      subtitle: Text(l10n.keepBoxPhotoSubtitle),
+                      secondary: const Icon(Icons.photo_outlined),
+                    ),
+                    if (_keepPhoto)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.memory(
+                            photo,
+                            semanticLabel: l10n.photoOfBox,
+                            fit: BoxFit.contain,
+                            height: 280,
+                            errorBuilder: (_, _, _) => SizedBox(
+                              height: 80,
+                              child: Center(
+                                child: Text(l10n.photoCantShow, style: theme.textTheme.bodyMedium),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 24),
-          _Label('When you take it'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final tag in MedicineTags.fixed)
-                FilterChip(
-                  avatar: _tags.contains(tag) ? null : Icon(tagIcon(tag), size: 18),
-                  label: Text(MedicineTags.label(tag)),
-                  selected: _tags.contains(tag),
-                  onSelected: (on) => _toggle(tag, on),
+                  ],
                 ),
+              ),
             ],
-          ),
-          const SizedBox(height: 16),
-          _Label('Your tags'),
-          if (_custom.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            _Label(l10n.whenYouTakeIt),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final tag in _custom)
+                for (final tag in MedicineTags.fixed)
                   FilterChip(
-                    label: Text(tag),
+                    avatar: _tags.contains(tag) ? null : Icon(tagIcon(tag), size: 18),
+                    label: Text(l10n.tag(tag)),
                     selected: _tags.contains(tag),
                     onSelected: (on) => _toggle(tag, on),
                   ),
               ],
             ),
-            const SizedBox(height: 12),
-          ],
-          TextField(
-            controller: _newTag,
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _addTag(),
-            decoration: InputDecoration(
-              labelText: 'Add a tag',
-              hintText: 'e.g. When needed, Holiday',
-              suffixIcon: IconButton(
-                tooltip: 'Add tag',
-                icon: const Icon(Icons.add_rounded),
-                onPressed: _addTag,
+            const SizedBox(height: 16),
+            _Label(l10n.yourTags),
+            if (_custom.isNotEmpty) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final tag in _custom)
+                    FilterChip(
+                      label: Text(tag),
+                      selected: _tags.contains(tag),
+                      onSelected: (on) => _toggle(tag, on),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+            TextField(
+              controller: _newTag,
+              textCapitalization: TextCapitalization.sentences,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _addTag(),
+              decoration: InputDecoration(
+                labelText: l10n.addTagLabel,
+                hintText: l10n.addTagHint,
+                suffixIcon: IconButton(
+                  tooltip: l10n.addTag,
+                  icon: const Icon(Icons.add_rounded),
+                  onPressed: _addTag,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

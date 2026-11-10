@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import 'brand.dart';
 
 /// Three welcome steps, shown once at the very first start. [onDone] runs on
@@ -22,25 +23,23 @@ class _Step {
   final CustomPainter Function(ColorScheme) painter;
 }
 
-final _steps = [
-  _Step('How many times has someone asked you which medicines you take?', [
-    "At the doctor's, at the pharmacy, in the emergency room… and the boxes are at home.",
-  ], _DoctorPainter.new),
-  _Step('Now that problem is solved', [
-    "Your medicines, and your family's, are always with you: in your pocket, on your phone.",
-  ], _PocketPainter.new),
-  _Step('How it works', [
-    'Create a profile for each person.',
-    'Scan the barcode on the box, or take a photo.',
-    'Check and save. Everything stays encrypted on this phone.',
+List<_Step> _stepsIn(AppLocalizations l10n) => [
+  _Step(l10n.onboarding1Title, [l10n.onboarding1Body], _DoctorPainter.new),
+  _Step(l10n.onboarding2Title, [l10n.onboarding2Body], _PocketPainter.new),
+  _Step(l10n.onboarding3Title, [
+    l10n.onboarding3Body1,
+    l10n.onboarding3Body2,
+    l10n.onboarding3Body3,
   ], _AppPainter.new),
 ];
+
+const _stepCount = 3;
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final _pages = PageController();
   int _page = 0;
 
-  bool get _last => _page == _steps.length - 1;
+  bool get _last => _page == _stepCount - 1;
 
   @override
   void dispose() {
@@ -60,6 +59,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final l10n = context.l10n;
+    final steps = _stepsIn(l10n);
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -70,15 +71,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
                 child: _last
                     ? const SizedBox(height: 48)
-                    : TextButton(onPressed: widget.onDone, child: const Text('Skip')),
+                    : TextButton(onPressed: widget.onDone, child: Text(l10n.skip)),
               ),
             ),
             Expanded(
               child: PageView.builder(
                 controller: _pages,
-                itemCount: _steps.length,
+                itemCount: steps.length,
                 onPageChanged: (p) => setState(() => _page = p),
-                itemBuilder: (context, i) => _StepPage(step: _steps[i], index: i),
+                itemBuilder: (context, i) =>
+                    _StepPage(step: steps[i], index: i, total: steps.length),
               ),
             ),
             Padding(
@@ -92,7 +94,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       spacing: 8,
                       children: [
-                        for (var i = 0; i < _steps.length; i++)
+                        for (var i = 0; i < steps.length; i++)
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             width: i == _page ? 24 : 8,
@@ -105,7 +107,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ],
                     ),
                   ),
-                  FilledButton(onPressed: _next, child: Text(_last ? "OK, let's start" : 'Next')),
+                  FilledButton(onPressed: _next, child: Text(_last ? l10n.letsStart : l10n.next)),
                 ],
               ),
             ),
@@ -117,10 +119,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class _StepPage extends StatelessWidget {
-  const _StepPage({required this.step, required this.index});
+  const _StepPage({required this.step, required this.index, required this.total});
 
   final _Step step;
   final int index;
+  final int total;
 
   @override
   Widget build(BuildContext context) {
@@ -154,10 +157,10 @@ class _StepPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Semantics(
-                label: 'Step ${index + 1} of ${_steps.length}',
+                label: context.l10n.stepOf(index + 1, total),
                 excludeSemantics: true,
                 child: Text(
-                  'STEP ${index + 1} OF ${_steps.length}',
+                  context.l10n.stepOf(index + 1, total).toUpperCase(),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: scheme.primary,
                     letterSpacing: 1.2,

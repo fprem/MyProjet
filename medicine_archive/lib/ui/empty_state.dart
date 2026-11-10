@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import 'brand.dart';
 
 class EmptyState extends StatelessWidget {
@@ -50,13 +51,16 @@ Future<bool> confirmDelete(BuildContext context, String question) async {
     context: context,
     builder: (context) => AlertDialog(
       title: Text(question),
-      content: const Text("This can't be undone."),
+      content: Text(context.l10n.cantBeUndone),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.l10n.cancel),
+        ),
         FilledButton(
           style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
           onPressed: () => Navigator.pop(context, true),
-          child: const Text('Delete'),
+          child: Text(context.l10n.delete),
         ),
       ],
     ),

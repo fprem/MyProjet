@@ -5,12 +5,26 @@ import 'package:cryptography/cryptography.dart';
 
 /// A backup that can't be opened: wrong password, damaged, or not a backup.
 class BackupException implements Exception {
-  const BackupException(this.message);
+  const BackupException.notBackup()
+    : problem = BackupProblem.notBackup,
+      message = "This file isn't a Medicine Archive backup.";
+  const BackupException.wrongPassword()
+    : problem = BackupProblem.wrongPassword,
+      message = 'Wrong password, or the file is damaged.';
+  const BackupException.damaged()
+    : problem = BackupProblem.damaged,
+      message = 'The file is damaged.';
+
+  final BackupProblem problem;
+
+  /// The problem in English, for logs. The app shows its own words for it.
   final String message;
 
   @override
   String toString() => 'BackupException: $message';
 }
+
+enum BackupProblem { notBackup, wrongPassword, damaged }
 
 /// What a backup holds, to show before importing it.
 class BackupSummary {
@@ -71,11 +85,11 @@ class BackupCodec {
     if (file.length <= _headerLength ||
         !_magic.indexed.every((e) => file[e.$1] == e.$2) ||
         file[4] != _version) {
-      throw const BackupException("This file isn't a Medicine Archive backup.");
+      throw const BackupException.notBackup();
     }
     final rounds = ByteData.sublistView(file, 5, 9).getUint32(0);
     if (rounds < 1 || rounds > 5000000) {
-      throw const BackupException("This file isn't a Medicine Archive backup.");
+      throw const BackupException.notBackup();
     }
     final salt = file.sublist(9, _headerLength);
     try {
@@ -87,11 +101,11 @@ class BackupCodec {
       final clear = await _cipher.decrypt(box, secretKey: await _key(password, salt, rounds));
       return jsonDecode(utf8.decode(clear)) as Map<String, dynamic>;
     } on SecretBoxAuthenticationError {
-      throw const BackupException('Wrong password, or the file is damaged.');
+      throw const BackupException.wrongPassword();
     } on ArgumentError {
-      throw const BackupException('The file is damaged.');
+      throw const BackupException.damaged();
     } on FormatException {
-      throw const BackupException('The file is damaged.');
+      throw const BackupException.damaged();
     }
   }
 }

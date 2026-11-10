@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../data/archive_repository.dart';
 import '../data/backup.dart';
+import '../l10n/l10n.dart';
 
 /// Where backup files go and come from: the phone's file chooser in the
 /// app, a fake in tests.
@@ -36,11 +37,7 @@ Future<void> exportBackup(
   String two(int n) => n.toString().padLeft(2, '0');
   final name = 'medicine-archive-${now.year}-${two(now.month)}-${two(now.day)}.mabk';
   if (!await files.save(name, bytes) || !context.mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text("Backup saved. Keep the password safe: without it the backup can't be opened."),
-    ),
-  );
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.backupSaved)));
 }
 
 /// Import backup: picks a file, asks its password, and after a check
@@ -66,35 +63,38 @@ Future<void> importBackup(
     await repository.importData(backup);
   } on BackupException catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.backupProblem(e))));
     }
     return;
   }
   if (!context.mounted) return;
   ScaffoldMessenger.of(
     context,
-  ).showSnackBar(SnackBar(content: Text('Backup imported: ${_count(summary)}.')));
+  ).showSnackBar(SnackBar(content: Text(context.l10n.backupImported(_count(context, summary)))));
 }
 
-String _count(BackupSummary s) =>
-    '${s.profiles} ${s.profiles == 1 ? 'profile' : 'profiles'} and '
-    '${s.medicines} ${s.medicines == 1 ? 'medicine' : 'medicines'}';
+String _count(BuildContext context, BackupSummary s) {
+  final l10n = context.l10n;
+  return l10n.backupCounts(l10n.profilesCount(s.profiles), l10n.medicineCount(s.medicines));
+}
 
 Future<bool> _confirmReplace(BuildContext context, BackupSummary summary) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Replace everything on this phone?'),
-      content: Text(
-        'The backup has ${_count(summary)}. '
-        'What is on this phone now will be replaced by it.',
-      ),
+      title: Text(context.l10n.replaceTitle),
+      content: Text(context.l10n.replaceMessage(_count(context, summary))),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.l10n.cancel),
+        ),
         FilledButton(
           style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
           onPressed: () => Navigator.pop(context, true),
-          child: const Text('Replace'),
+          child: Text(context.l10n.replace),
         ),
       ],
     ),
@@ -107,10 +107,13 @@ Future<T?> _working<T>(BuildContext context, Future<T> Function() work) async {
   showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => const PopScope(
+    builder: (context) => PopScope(
       canPop: false,
       child: AlertDialog(
-        content: Row(spacing: 20, children: [CircularProgressIndicator(), Text('Encrypting…')]),
+        content: Row(
+          spacing: 20,
+          children: [const CircularProgressIndicator(), Text(context.l10n.encrypting)],
+        ),
       ),
     ),
   );
@@ -140,9 +143,9 @@ class _NewPasswordDialogState extends State<_NewPasswordDialog> {
   }
 
   String? get _problem {
-    if (_password.text.length < _minPassword) return 'At least $_minPassword characters';
+    if (_password.text.length < _minPassword) return context.l10n.atLeastChars(_minPassword);
     if (_repeat.text.isNotEmpty && _repeat.text != _password.text) {
-      return "The passwords don't match";
+      return context.l10n.passwordsDontMatch;
     }
     return null;
   }
@@ -152,41 +155,38 @@ class _NewPasswordDialogState extends State<_NewPasswordDialog> {
   @override
   Widget build(BuildContext context) {
     final problem = _password.text.isEmpty && _repeat.text.isEmpty ? null : _problem;
+    final l10n = context.l10n;
     return AlertDialog(
-      title: const Text('Export backup'),
+      title: Text(l10n.exportBackup),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: 12,
           children: [
-            const Text(
-              'The backup holds every profile, medicine and kept photo, encrypted '
-              'with a password you choose. You need the password to import it, '
-              "and nobody can open it without, not even you if it's forgotten.",
-            ),
+            Text(l10n.exportBackupMessage),
             TextField(
               controller: _password,
               obscureText: true,
               autofocus: true,
-              decoration: const InputDecoration(labelText: 'Password'),
+              decoration: InputDecoration(labelText: l10n.password),
               onChanged: (_) => setState(() {}),
             ),
             TextField(
               controller: _repeat,
               obscureText: true,
-              decoration: InputDecoration(labelText: 'Repeat password', errorText: problem),
+              decoration: InputDecoration(labelText: l10n.repeatPassword, errorText: problem),
               onChanged: (_) => setState(() {}),
             ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
         FilledButton(
           style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
           onPressed: _ok ? () => Navigator.pop(context, _password.text) : null,
-          child: const Text('Export'),
+          child: Text(l10n.export),
         ),
       ],
     );
@@ -225,7 +225,7 @@ class _OpenBackupDialogState extends State<_OpenBackupDialog> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = e.message;
+          _error = context.l10n.backupProblem(e);
         });
       }
     }
@@ -233,20 +233,21 @@ class _OpenBackupDialogState extends State<_OpenBackupDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return AlertDialog(
-      title: const Text('Import backup'),
+      title: Text(l10n.importBackup),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 12,
         children: [
-          const Text('Type the password the backup was made with.'),
+          Text(l10n.typeBackupPassword),
           TextField(
             controller: _password,
             obscureText: true,
             autofocus: true,
             enabled: !_busy,
-            decoration: InputDecoration(labelText: 'Password', errorText: _error),
+            decoration: InputDecoration(labelText: l10n.password, errorText: _error),
             onChanged: (_) => setState(() {}),
             onSubmitted: (_) => _password.text.isEmpty || _busy ? null : _open(),
           ),
@@ -256,12 +257,12 @@ class _OpenBackupDialogState extends State<_OpenBackupDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
           onPressed: _password.text.isEmpty || _busy ? null : _open,
-          child: const Text('Open'),
+          child: Text(l10n.open),
         ),
       ],
     );

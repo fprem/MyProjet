@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../app.dart';
 import '../data/archive_repository.dart';
 import '../data/tags.dart';
+import '../l10n/l10n.dart';
 import '../scan/barcode_scan.dart';
 import '../scan/photo_scanner.dart';
 import 'brand.dart';
@@ -57,9 +59,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() => _reading = false);
         if (found.fromCatalog) {
           await _openForm(
-            title: 'Check medicine',
+            title: context.l10n.checkMedicine,
             initial: found.label,
-            notice: ["From the barcode: AIC $aic, found in AIFA's medicine list."],
+            notice: [context.l10n.fromBarcodeFound(aic)],
           );
           return;
         }
@@ -73,35 +75,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final path = await widget.takePhoto();
     if (path == null || !mounted) return;
 
+    final l10n = context.l10n;
     setState(() => _reading = true);
     ScanResult result;
     String message;
     try {
       result = await widget.scanner.scan(path);
       message = result.label.isEmpty
-          ? "Couldn't read the label. Please type it in."
+          ? l10n.couldntReadLabel
           : result.fromCatalog
-          ? "From the barcode in the photo: AIC ${result.aic}, found in AIFA's medicine list."
+          ? l10n.fromBarcodeInPhoto('${result.aic}')
           : missedAic != null
-          ? "The barcode (AIC $missedAic) isn't in AIFA's list, so the text in the photo was read."
-          : 'Read from the text in the photo. Check it and fix anything that is wrong.';
+          ? l10n.barcodeNotInList(missedAic)
+          : l10n.readFromText;
     } catch (_) {
       result = const ScanResult(LabelResult.empty());
-      message = "Couldn't read the label. Please type it in.";
+      message = l10n.couldntReadLabel;
     }
     if (!mounted) return;
     setState(() => _reading = false);
 
     await _openForm(
-      title: 'Check medicine',
+      title: l10n.checkMedicine,
       initial: result.label,
       photo: result.photo,
-      notice: [
-        message,
-        result.photo == null
-            ? 'The photo has been deleted.'
-            : 'The photo is deleted when you save, unless you keep it.',
-      ],
+      notice: [message, result.photo == null ? l10n.photoDeleted : l10n.photoDeletedOnSave],
     );
   }
 
@@ -130,6 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           notice: notice,
           photo: photo,
           keepPhoto: editing != null && photo != null,
+          editing: editing != null,
           addPhoto: _addPhoto,
           tags: editing?.tags ?? const [],
           knownTags: _repo.customTagsOf(widget.profile.id),
@@ -167,11 +166,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('${draft.name.trim()} saved')));
+    ).showSnackBar(SnackBar(content: Text(context.l10n.medicineSaved(draft.name.trim()))));
   }
 
   Future<void> _deleteMedicine(Medicine medicine) async {
-    if (await confirmDelete(context, 'Delete ${medicine.name}?')) {
+    if (await confirmDelete(context, context.l10n.deleteMedicineQuestion(medicine.name))) {
       await _repo.deleteMedicine(medicine.id);
     }
   }
@@ -182,9 +181,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
-        content: Text('${medicine.name} ${archived ? 'archived' : 'restored'}'),
+        content: Text(
+          archived
+              ? context.l10n.medicineArchived(medicine.name)
+              : context.l10n.medicineRestored(medicine.name),
+        ),
         action: SnackBarAction(
-          label: 'Undo',
+          label: context.l10n.undo,
           onPressed: () => _repo.setArchived(medicine.id, !archived),
         ),
       ),
@@ -200,13 +203,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
-        content: Text('${medicine.name} moved to ${MedicineTags.groupLabel(to)}'),
-        action: SnackBarAction(label: 'Undo', onPressed: () => _repo.setTags(medicine.id, before)),
+        content: Text(context.l10n.medicineMoved(medicine.name, context.l10n.group(to))),
+        action: SnackBarAction(
+          label: context.l10n.undo,
+          onPressed: () => _repo.setTags(medicine.id, before),
+        ),
       ),
     );
   }
 
-  Widget _card(Medicine medicine, {String? group, bool draggable = false}) {
+  /// [moveTargets]: the groups the medicine can be moved to from [group],
+  /// offered to TalkBack and Switch Access as the same move that dragging does.
+  Widget _card(
+    Medicine medicine, {
+    String? group,
+    bool draggable = false,
+    List<String?> moveTargets = const [],
+  }) {
+    final l10n = context.l10n;
     final card = _MedicineCard(
       medicine: medicine,
       otherTags: [
@@ -215,7 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
       showTags: group == null && !draggable,
       onTap: () => _openForm(
-        title: 'Edit medicine',
+        title: l10n.editMedicine,
         editing: medicine,
         initial: LabelResult(
           name: medicine.name,
@@ -229,22 +243,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     final item = !draggable
         ? card
-        : LayoutBuilder(
-            builder: (context, constraints) => LongPressDraggable<_Dragged>(
-              data: _Dragged(medicine, group),
-              hapticFeedbackOnStart: true,
-              // The card hangs below the finger, so the group or chip under
-              // it stays in sight and lights up.
-              dragAnchorStrategy: (_, _, _) => Offset(constraints.maxWidth * 0.375, -20),
-              feedback: Material(
-                type: MaterialType.transparency,
-                child: SizedBox(
-                  width: constraints.maxWidth * 0.75,
-                  child: Transform.rotate(angle: -0.03, child: _Lifted(child: card)),
+        : Semantics(
+            customSemanticsActions: {
+              for (final to in moveTargets)
+                if (to != group)
+                  CustomSemanticsAction(label: l10n.moveTo(l10n.group(to))): () =>
+                      _move(_Dragged(medicine, group), to),
+            },
+            child: LayoutBuilder(
+              builder: (context, constraints) => LongPressDraggable<_Dragged>(
+                data: _Dragged(medicine, group),
+                hapticFeedbackOnStart: true,
+                // The card hangs below the finger, so the group or chip under
+                // it stays in sight and lights up.
+                dragAnchorStrategy: (_, _, _) => Offset(constraints.maxWidth * 0.375, -20),
+                feedback: Material(
+                  type: MaterialType.transparency,
+                  child: SizedBox(
+                    width: constraints.maxWidth * 0.75,
+                    child: Transform.rotate(angle: -0.03, child: _Lifted(child: card)),
+                  ),
                 ),
+                childWhenDragging: Opacity(opacity: 0.35, child: card),
+                child: card,
               ),
-              childWhenDragging: Opacity(opacity: 0.35, child: card),
-              child: card,
             ),
           );
     return Padding(padding: const EdgeInsets.only(bottom: 10), child: item);
@@ -262,6 +284,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (hasTags) null,
     ];
     final filter = _filter;
+    final l10n = context.l10n;
+    // Every group a medicine can go to: the times of day, the person's own
+    // tags, and No tag once something is tagged.
+    final targets = <String?>[...chipTags, if (!hasTags) null];
     final chips = SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -270,7 +296,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           ChoiceChip(
             key: const ValueKey('filter-all'),
-            label: Text('All (${taking.length})'),
+            label: Text(l10n.allCount(taking.length)),
             selected: filter == null,
             onSelected: (_) => setState(() => _filter = null),
           ),
@@ -282,7 +308,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: ChoiceChip(
                 key: ValueKey('filter-${tag ?? 'none'}'),
                 avatar: filter?.tag == tag && filter != null ? null : Icon(tagIcon(tag), size: 18),
-                label: Text('${MedicineTags.groupLabel(tag)} (${count(tag)})'),
+                label: Text(l10n.groupCount(l10n.group(tag), count(tag))),
                 selected: filter != null && filter.tag == tag,
                 onSelected: (_) => setState(() => _filter = (tag: tag)),
               ),
@@ -295,14 +321,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (filter != null) {
       final shown = groups.where((g) => g.tag == filter.tag).firstOrNull?.medicines ?? const [];
       list = [
-        if (shown.isEmpty)
-          _Hint(
-            'Nothing here yet. Hold a medicine and drop it on this chip, or pick the tag in its form.',
-          ),
-        for (final m in shown) _card(m, group: filter.tag, draggable: true),
+        if (shown.isEmpty) _Hint(l10n.emptyGroupHint),
+        for (final m in shown) _card(m, group: filter.tag, draggable: true, moveTargets: targets),
       ];
     } else if (!hasTags) {
-      list = [for (final m in taking) _card(m, draggable: true)];
+      list = [for (final m in taking) _card(m, draggable: true, moveTargets: targets)];
     } else {
       list = [
         for (final g in groups)
@@ -315,7 +338,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _GroupHeader(tag: g.tag, count: g.medicines.length),
-                for (final m in g.medicines) _card(m, group: g.tag, draggable: true),
+                for (final m in g.medicines)
+                  _card(m, group: g.tag, draggable: true, moveTargets: targets),
               ],
             ),
           ),
@@ -326,7 +350,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-          child: _Hint('Hold a medicine and drag it to another group to change its tag.'),
+          child: _Hint(l10n.dragHint),
         ),
       ),
       SliverPadding(
@@ -338,7 +362,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _deleteProfile() async {
     final name = widget.profile.name;
-    if (await confirmDelete(context, 'Delete $name and all their medicines?')) {
+    if (await confirmDelete(context, context.l10n.deleteProfileQuestion(name))) {
       await _repo.deleteProfile(widget.profile.id);
       if (mounted) Navigator.pop(context);
     }
@@ -346,6 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _reading
@@ -354,7 +379,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               heroTag: null,
               onPressed: _scan,
               icon: const Icon(Icons.document_scanner_outlined),
-              label: const Text('Scan box'),
+              label: Text(l10n.scanBox),
             ),
       body: CustomScrollView(
         slivers: [
@@ -362,14 +387,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: Text(widget.profile.name),
             actions: [
               IconButton(
-                tooltip: 'Add by hand',
+                tooltip: l10n.addByHand,
                 icon: const Icon(Icons.edit_note_rounded),
-                onPressed: _reading ? null : () => _openForm(title: 'Add medicine'),
+                onPressed: _reading ? null : () => _openForm(title: l10n.addMedicine),
               ),
               PopupMenuButton<void>(
-                tooltip: 'More options',
+                tooltip: l10n.moreOptions,
                 itemBuilder: (_) => [
-                  PopupMenuItem(onTap: _deleteProfile, child: const Text('Delete profile')),
+                  PopupMenuItem(onTap: _deleteProfile, child: Text(l10n.deleteProfile)),
                 ],
               ),
             ],
@@ -394,12 +419,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ButtonSegment(
                               value: false,
                               icon: const Icon(Icons.medication_outlined),
-                              label: Text('Taking (${taking.length})'),
+                              label: Text(l10n.takingCount(taking.length)),
                             ),
                             ButtonSegment(
                               value: true,
                               icon: const Icon(Icons.inventory_2_outlined),
-                              label: Text('Archived (${archived.length})'),
+                              label: Text(l10n.archivedCount(archived.length)),
                             ),
                           ],
                           selected: {_showArchived},
@@ -411,17 +436,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       SliverFillRemaining(
                         hasScrollBody: false,
                         child: _showArchived
-                            ? const EmptyState(
-                                title: 'No archived medicines',
-                                message:
-                                    'When someone stops taking a medicine, tap Archive '
-                                    'on it and it moves here.',
+                            ? EmptyState(
+                                title: l10n.noArchivedTitle,
+                                message: l10n.noArchivedMessage,
                               )
-                            : const EmptyState(
-                                title: 'No medicines yet',
-                                message:
-                                    'Tap Scan box to read a medicine box. '
-                                    'Only what you check and save is kept, encrypted on this phone.',
+                            : EmptyState(
+                                title: l10n.noMedicinesTitle,
+                                message: l10n.noMedicinesMessage,
                               ),
                       )
                     else if (_showArchived)
@@ -468,6 +489,7 @@ class _MedicineCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final l10n = context.l10n;
     final hasDetails =
         medicine.strength.isNotEmpty || medicine.quantity != null || otherTags.isNotEmpty;
     return Card(
@@ -502,7 +524,7 @@ class _MedicineCard extends StatelessWidget {
                       if (medicine.strength.isNotEmpty) StrengthTag(medicine.strength),
                       if (medicine.quantity != null) QuantityPill(medicine.quantityLabel),
                       for (final t in otherTags)
-                        _TagHint(showTags ? MedicineTags.label(t) : '+ ${MedicineTags.label(t)}'),
+                        _TagHint(showTags ? l10n.tag(t) : '+ ${l10n.tag(t)}'),
                     ],
                   ),
                 ),
@@ -511,7 +533,9 @@ class _MedicineCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              tooltip: medicine.archived ? 'Restore ${medicine.name}' : 'Archive ${medicine.name}',
+              tooltip: medicine.archived
+                  ? l10n.restoreMedicine(medicine.name)
+                  : l10n.archiveMedicine(medicine.name),
               icon: Icon(
                 medicine.archived ? Icons.unarchive_outlined : Icons.inventory_2_outlined,
                 color: scheme.onSurfaceVariant,
@@ -519,7 +543,7 @@ class _MedicineCard extends StatelessWidget {
               onPressed: onArchive,
             ),
             IconButton(
-              tooltip: 'Delete ${medicine.name}',
+              tooltip: l10n.deleteMedicine(medicine.name),
               icon: Icon(Icons.delete_outline_rounded, color: scheme.onSurfaceVariant),
               onPressed: onDelete,
             ),
@@ -545,11 +569,11 @@ class _Reading extends StatelessWidget {
           const SizedBox(height: 28),
           Semantics(
             liveRegion: true,
-            child: Text('Reading the label…', style: theme.textTheme.titleLarge),
+            child: Text(context.l10n.readingLabel, style: theme.textTheme.titleLarge),
           ),
           const SizedBox(height: 8),
           Text(
-            'This happens on your phone.',
+            context.l10n.happensOnPhone,
             style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
         ],
@@ -623,7 +647,7 @@ class _GroupHeader extends StatelessWidget {
     final scheme = theme.colorScheme;
     return Semantics(
       header: true,
-      label: '${MedicineTags.groupLabel(tag)}, $count',
+      label: '${context.l10n.group(tag)}, $count',
       excludeSemantics: true,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(4, 14, 4, 10),
@@ -639,7 +663,7 @@ class _GroupHeader extends StatelessWidget {
               ),
               child: Icon(tagIcon(tag), size: 18, color: scheme.primary),
             ),
-            Flexible(child: Text(MedicineTags.groupLabel(tag), style: theme.textTheme.titleMedium)),
+            Flexible(child: Text(context.l10n.group(tag), style: theme.textTheme.titleMedium)),
             Text(
               '$count',
               style: theme.textTheme.titleMedium?.copyWith(color: scheme.onSurfaceVariant),
@@ -679,7 +703,7 @@ class _Hint extends StatelessWidget {
     final theme = Theme.of(context);
     return Text(
       text,
-      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
     );
   }
 }

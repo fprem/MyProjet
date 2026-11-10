@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import 'brand.dart';
 
 /// The "? Help" on the scan screen. Opens [showBarcodeHelp].
@@ -13,7 +14,7 @@ class BarcodeHelpButton extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(right: 8),
     child: Tooltip(
-      message: 'Which barcode?',
+      message: context.l10n.whichBarcode,
       child: FilledButton.icon(
         style: FilledButton.styleFrom(
           backgroundColor: Brand.mint,
@@ -23,7 +24,7 @@ class BarcodeHelpButton extends StatelessWidget {
         ),
         onPressed: () => showBarcodeHelp(context),
         icon: const Icon(Icons.help_rounded),
-        label: const Text('Help'),
+        label: Text(context.l10n.help),
       ),
     ),
   );
@@ -45,44 +46,40 @@ class _BarcodeHelp extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final l10n = context.l10n;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 16,
         children: [
-          Text('Which barcode to scan', style: theme.textTheme.headlineSmall),
-          _Heading(icon: Icons.check_circle_rounded, color: scheme.primary, text: 'Scan this'),
-          const _Example(
+          Text(l10n.helpTitle, style: theme.textTheme.headlineSmall),
+          _Heading(icon: Icons.check_circle_rounded, color: scheme.primary, text: l10n.scanThis),
+          _Example(
             image: 'assets/help/bollino.png',
-            label: 'A bollino: striped barcode with A012745093 under it',
-            title: 'The bollino',
-            text:
-                'The sticker with a striped barcode and an A plus 9 digits under it: '
-                'that is the AIC code.',
+            label: l10n.bollinoImageLabel,
+            title: l10n.bollinoTitle,
+            text: l10n.bollinoText,
           ),
-          const _Example(
+          _Example(
             image: 'assets/help/datamatrix.png',
-            label: 'A square Data Matrix code made of dots',
-            title: 'The square dot code',
-            text: 'Newer boxes have a grid of dots (Data Matrix) with the AIC code inside.',
+            label: l10n.datamatrixImageLabel,
+            title: l10n.datamatrixTitle,
+            text: l10n.datamatrixText,
           ),
-          _Heading(icon: Icons.cancel_rounded, color: scheme.error, text: 'Not this'),
-          const _Example(
+          _Heading(icon: Icons.cancel_rounded, color: scheme.error, text: l10n.notThis),
+          _Example(
             image: 'assets/help/ean13.png',
-            label: 'An EAN-13 shop barcode with 13 digits',
-            title: 'The shop barcode',
-            text:
-                "13 digits, often starting with 80. It's only a product number, so the app "
-                'skips it. If the box only has this one, take a photo instead.',
+            label: l10n.eanImageLabel,
+            title: l10n.eanTitle,
+            text: l10n.eanText,
             wrong: true,
           ),
           Text(
-            "Medicine names come from AIFA's open data (Agenzia Italiana del Farmaco), "
-            'adapted for the app. Licence: CC BY 4.0.',
+            l10n.aifaCredit,
             style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Got it')),
+          FilledButton(onPressed: () => Navigator.pop(context), child: Text(l10n.gotIt)),
         ],
       ),
     );
