@@ -134,20 +134,6 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String allCount(int count) {
-    return 'Tutti ($count)';
-  }
-
-  @override
-  String groupCount(String group, int count) {
-    return '$group ($count)';
-  }
-
-  @override
-  String get emptyGroupHint =>
-      'Qui non c\'è ancora niente. Tieni premuto un farmaco e trascinalo su questa etichetta, oppure scegli l\'etichetta nella sua scheda.';
-
-  @override
   String get dragHint =>
       'Tieni premuto un farmaco e trascinalo in un altro gruppo per cambiargli etichetta.';
 
@@ -158,9 +144,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get scanBox => 'Scansiona scatola';
-
-  @override
-  String get addByHand => 'Aggiungi a mano';
 
   @override
   String get deleteProfile => 'Elimina profilo';
@@ -188,21 +171,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get noMedicinesMessage =>
       'Tocca Scansiona scatola per leggere la confezione. Viene tenuto solo quello che controlli e salvi, cifrato su questo telefono.';
-
-  @override
-  String restoreMedicine(String name) {
-    return 'Ripristina $name';
-  }
-
-  @override
-  String archiveMedicine(String name) {
-    return 'Archivia $name';
-  }
-
-  @override
-  String deleteMedicine(String name) {
-    return 'Elimina $name';
-  }
 
   @override
   String get readingLabel => 'Lettura dell\'etichetta…';
@@ -496,4 +464,39 @@ class AppLocalizationsIt extends AppLocalizations {
   String stepOf(int step, int total) {
     return 'Passo $step di $total';
   }
+
+  @override
+  String optionsFor(String name) {
+    return 'Opzioni per $name';
+  }
+
+  @override
+  String get edit => 'Modifica';
+
+  @override
+  String get archiveStopped => 'Archivia (non lo prende più)';
+
+  @override
+  String get restore => 'Ripristina';
+
+  @override
+  String alsoTags(String tags) {
+    return 'anche $tags';
+  }
+
+  @override
+  String searchMedicines(String name) {
+    return 'Cerca tra i farmaci di $name';
+  }
+
+  @override
+  String noMatch(String query) {
+    return 'Nessun farmaco corrisponde a \"$query\"';
+  }
+
+  @override
+  String get typeItIn => 'Scrivi a mano';
+
+  @override
+  String get clearSearch => 'Cancella la ricerca';
 }

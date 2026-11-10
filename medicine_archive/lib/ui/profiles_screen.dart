@@ -69,7 +69,13 @@ class ProfilesScreen extends StatelessWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar.large(
-                title: Row(spacing: 12, children: [const LogoMark(size: 36), Text(l10n.appTitle)]),
+                title: Row(
+                  spacing: 12,
+                  children: [
+                    const LogoMark(size: 36),
+                    Flexible(child: Text(l10n.appTitle, overflow: TextOverflow.ellipsis)),
+                  ],
+                ),
                 actions: [
                   if (backupFiles case final files?)
                     PopupMenuButton<void>(

@@ -9,7 +9,6 @@
   "undo": "Annulla",
   "moreOptions": "Altre opzioni",
   "cantBeUndone": "Non si può annullare.",
-
   "newProfile": "Nuovo profilo",
   "exportBackup": "Esporta backup",
   "importBackup": "Importa backup",
@@ -19,7 +18,6 @@
   "profilesHeading": "Profili",
   "medicineCount": "{count, plural, =1{1 farmaco} other{{count} farmaci}}",
   "nameLabel": "Nome",
-
   "checkMedicine": "Controlla il farmaco",
   "editMedicine": "Modifica farmaco",
   "addMedicine": "Aggiungi farmaco",
@@ -35,13 +33,9 @@
   "medicineArchived": "{name} archiviato",
   "medicineRestored": "{name} ripristinato",
   "medicineMoved": "{name} spostato in {group}",
-  "allCount": "Tutti ({count})",
-  "groupCount": "{group} ({count})",
-  "emptyGroupHint": "Qui non c'è ancora niente. Tieni premuto un farmaco e trascinalo su questa etichetta, oppure scegli l'etichetta nella sua scheda.",
   "dragHint": "Tieni premuto un farmaco e trascinalo in un altro gruppo per cambiargli etichetta.",
   "deleteProfileQuestion": "Eliminare {name} e tutti i suoi farmaci?",
   "scanBox": "Scansiona scatola",
-  "addByHand": "Aggiungi a mano",
   "deleteProfile": "Elimina profilo",
   "takingCount": "In uso ({count})",
   "archivedCount": "Archiviati ({count})",
@@ -49,20 +43,15 @@
   "noArchivedMessage": "Quando qualcuno smette di prendere un farmaco, tocca Archivia e il farmaco finisce qui.",
   "noMedicinesTitle": "Ancora nessun farmaco",
   "noMedicinesMessage": "Tocca Scansiona scatola per leggere la confezione. Viene tenuto solo quello che controlli e salvi, cifrato su questo telefono.",
-  "restoreMedicine": "Ripristina {name}",
-  "archiveMedicine": "Archivia {name}",
-  "deleteMedicine": "Elimina {name}",
   "readingLabel": "Lettura dell'etichetta…",
   "happensOnPhone": "Avviene sul tuo telefono.",
   "moveTo": "Sposta in {group}",
   "moveMedicineTo": "Sposta {name} in",
   "moveToMenu": "Sposta in…",
-
   "tagMorning": "Mattina",
   "tagNoon": "Mezzogiorno",
   "tagEvening": "Sera",
   "noTag": "Senza etichetta",
-
   "savedEncrypted": "Salvato cifrato solo su questo telefono.",
   "required": "Obbligatorio",
   "strengthField": "Dosaggio (facoltativo)",
@@ -87,7 +76,6 @@
   "discardChangesMessage": "Le modifiche non sono state salvate.",
   "keepEditing": "Continua a modificare",
   "discard": "Scarta",
-
   "backupSaved": "Backup salvato. Custodisci la password: senza, il backup non si può aprire.",
   "profilesCount": "{count, plural, =1{1 profilo} other{{count} profili}}",
   "backupCounts": "{profiles} e {medicines}",
@@ -107,13 +95,11 @@
   "backupNotBackup": "Questo file non è un backup di Medicine Archive.",
   "backupWrongPassword": "Password sbagliata, o il file è danneggiato.",
   "backupDamaged": "Il file è danneggiato.",
-
   "lockedTitle": "Medicine Archive è bloccato",
   "lockedMessage": "Usa l'impronta, il volto o il PIN del telefono per aprirlo.",
   "unlock": "Sblocca",
   "unlockReason": "Sblocca il tuo archivio farmaci",
   "archiveCantOpen": "Non è stato possibile aprire l'archivio. {detail}.",
-
   "scanBarcode": "Scansiona codice a barre",
   "pointCamera": "Inquadra il codice a barre sulla scatola (il codice AIC sul bollino).",
   "noBarcodeTakePhoto": "Niente codice? Scatta una foto",
@@ -133,7 +119,6 @@
   "eanText": "13 cifre, spesso inizia con 80. È solo un numero di prodotto, quindi l'app lo salta. Se la scatola ha solo questo, scatta una foto.",
   "aifaCredit": "I nomi dei farmaci vengono dai dati aperti di AIFA (Agenzia Italiana del Farmaco), adattati per l'app. Licenza: CC BY 4.0.",
   "gotIt": "Ho capito",
-
   "onboarding1Title": "Quante volte ti hanno chiesto quali farmaci prendi?",
   "onboarding1Body": "Dal medico, in farmacia, al pronto soccorso… e le scatole sono a casa.",
   "onboarding2Title": "Ora il problema è risolto",
@@ -144,5 +129,14 @@
   "onboarding3Body3": "Controlla e salva. Tutto resta cifrato su questo telefono.",
   "skip": "Salta",
   "letsStart": "OK, cominciamo",
-  "stepOf": "Passo {step} di {total}"
+  "stepOf": "Passo {step} di {total}",
+  "optionsFor": "Opzioni per {name}",
+  "edit": "Modifica",
+  "archiveStopped": "Archivia (non lo prende più)",
+  "restore": "Ripristina",
+  "alsoTags": "anche {tags}",
+  "searchMedicines": "Cerca tra i farmaci di {name}",
+  "noMatch": "Nessun farmaco corrisponde a \"{query}\"",
+  "typeItIn": "Scrivi a mano",
+  "clearSearch": "Cancella la ricerca"
 }

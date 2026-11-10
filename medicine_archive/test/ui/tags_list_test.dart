@@ -35,7 +35,6 @@ void main() {
   }
 
   Finder section(String? tag) => find.byKey(ValueKey('section-${tag ?? 'none'}'));
-  Finder filter(String? tag) => find.byKey(ValueKey('filter-${tag ?? 'none'}'));
   Finder inSection(String? tag, String text) =>
       find.descendant(of: section(tag), matching: find.text(text));
 
@@ -91,8 +90,8 @@ void main() {
 
     expect(inSection(MedicineTags.morning, 'Metformina'), findsOneWidget);
     expect(inSection(MedicineTags.evening, 'Metformina'), findsOneWidget);
-    expect(inSection(MedicineTags.morning, '+ Evening'), findsOneWidget);
-    expect(inSection(MedicineTags.evening, '+ Morning'), findsOneWidget);
+    expect(inSection(MedicineTags.morning, 'also Evening'), findsOneWidget);
+    expect(inSection(MedicineTags.evening, 'also Morning'), findsOneWidget);
   });
 
   testWidgets('without any tags the list stays a plain list', (tester) async {
@@ -103,36 +102,6 @@ void main() {
     expect(section(null), findsNothing);
     expect(find.text('Aspirina'), findsOneWidget);
     expect(find.text('Moment'), findsOneWidget);
-  });
-
-  testWidgets('filter chips show counts, and a chip shows only its group', (tester) async {
-    await addDay();
-    await pumpAnna(tester);
-
-    expect(find.text('All (5)'), findsOneWidget);
-    expect(find.text('Morning (2)'), findsOneWidget);
-    expect(find.text('Noon (1)'), findsOneWidget);
-    expect(find.text('Evening (1)'), findsOneWidget);
-    expect(find.text('When needed (1)'), findsOneWidget);
-    expect(find.text('No tag (1)'), findsOneWidget);
-
-    await tester.tap(filter(MedicineTags.evening));
-    await tester.pumpAndSettle();
-    expect(find.text('Metformina'), findsOneWidget);
-    expect(find.text('Eutirox'), findsNothing);
-    expect(find.text('Aspirina'), findsNothing);
-
-    await tester.tap(find.byKey(const ValueKey('filter-all')));
-    await tester.pumpAndSettle();
-    expect(find.text('Eutirox'), findsOneWidget);
-  });
-
-  testWidgets('the fixed chips are there even when empty, to drop medicines on', (tester) async {
-    await repo.addMedicine(anna.id, name: 'Aspirina');
-    await pumpAnna(tester);
-    expect(find.text('Morning (0)'), findsOneWidget);
-    expect(find.text('Noon (0)'), findsOneWidget);
-    expect(find.text('Evening (0)'), findsOneWidget);
   });
 
   testWidgets('dragging a medicine to another group changes its tag', (tester) async {
@@ -174,20 +143,6 @@ void main() {
     ]);
   });
 
-  testWidgets('dropping on a chip moves it there, also from a filtered list', (tester) async {
-    await addDay();
-    await pumpAnna(tester);
-
-    await tester.tap(filter(MedicineTags.morning));
-    await tester.pumpAndSettle();
-    await drag(tester, find.text('Eutirox'), filter(MedicineTags.noon));
-
-    expect(repo.medicinesOf(anna.id).firstWhere((m) => m.name == 'Eutirox').tags, [
-      MedicineTags.noon,
-    ]);
-    expect(find.text('Eutirox moved to Noon'), findsOneWidget);
-  });
-
   testWidgets('dropping on No tag removes only the tag it came from', (tester) async {
     await addDay();
     await pumpAnna(tester);
@@ -200,21 +155,11 @@ void main() {
     expect(find.text('Metformina moved to No tag'), findsOneWidget);
   });
 
-  testWidgets('an untagged medicine in a plain list can be dropped on a chip', (tester) async {
-    await repo.addMedicine(anna.id, name: 'Aspirina');
-    await pumpAnna(tester);
-
-    await drag(tester, find.text('Aspirina'), filter(MedicineTags.evening));
-
-    expect(repo.medicinesOf(anna.id).single.tags, [MedicineTags.evening]);
-    expect(inSection(MedicineTags.evening, 'Aspirina'), findsOneWidget);
-  });
-
   testWidgets('dropping back on its own group changes nothing', (tester) async {
     await addDay();
     await pumpAnna(tester);
 
-    await drag(tester, inSection(MedicineTags.noon, 'Pantoprazolo'), filter(MedicineTags.noon));
+    await drag(tester, inSection(MedicineTags.noon, 'Pantoprazolo'), section(MedicineTags.noon));
 
     expect(repo.medicinesOf(anna.id).firstWhere((m) => m.name == 'Pantoprazolo').tags, [
       MedicineTags.noon,

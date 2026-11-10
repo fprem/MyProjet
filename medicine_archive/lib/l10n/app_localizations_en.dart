@@ -133,20 +133,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String allCount(int count) {
-    return 'All ($count)';
-  }
-
-  @override
-  String groupCount(String group, int count) {
-    return '$group ($count)';
-  }
-
-  @override
-  String get emptyGroupHint =>
-      'Nothing here yet. Hold a medicine and drop it on this chip, or pick the tag in its form.';
-
-  @override
   String get dragHint => 'Hold a medicine and drag it to another group to change its tag.';
 
   @override
@@ -156,9 +142,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scanBox => 'Scan box';
-
-  @override
-  String get addByHand => 'Add by hand';
 
   @override
   String get deleteProfile => 'Delete profile';
@@ -186,21 +169,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noMedicinesMessage =>
       'Tap Scan box to read a medicine box. Only what you check and save is kept, encrypted on this phone.';
-
-  @override
-  String restoreMedicine(String name) {
-    return 'Restore $name';
-  }
-
-  @override
-  String archiveMedicine(String name) {
-    return 'Archive $name';
-  }
-
-  @override
-  String deleteMedicine(String name) {
-    return 'Delete $name';
-  }
 
   @override
   String get readingLabel => 'Reading the label…';
@@ -495,4 +463,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String stepOf(int step, int total) {
     return 'Step $step of $total';
   }
+
+  @override
+  String optionsFor(String name) {
+    return 'Options for $name';
+  }
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get archiveStopped => 'Archive (stopped taking it)';
+
+  @override
+  String get restore => 'Restore';
+
+  @override
+  String alsoTags(String tags) {
+    return 'also $tags';
+  }
+
+  @override
+  String searchMedicines(String name) {
+    return 'Search $name\'s medicines';
+  }
+
+  @override
+  String noMatch(String query) {
+    return 'No medicine matches \"$query\"';
+  }
+
+  @override
+  String get typeItIn => 'Type it in';
+
+  @override
+  String get clearSearch => 'Clear search';
 }

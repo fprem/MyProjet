@@ -61,7 +61,7 @@ void main() {
 
     testWidgets('an empty new form closes without asking', (tester) async {
       await pumpAnna(tester);
-      await tester.tap(find.byTooltip('Add by hand'));
+      await tester.tap(find.text('Type it in'));
       await tester.pumpAndSettle();
 
       await back(tester);

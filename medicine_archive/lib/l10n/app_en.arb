@@ -9,7 +9,6 @@
   "undo": "Undo",
   "moreOptions": "More options",
   "cantBeUndone": "This can't be undone.",
-
   "newProfile": "New profile",
   "exportBackup": "Export backup",
   "importBackup": "Import backup",
@@ -18,70 +17,142 @@
   "importABackup": "Import a backup",
   "profilesHeading": "Profiles",
   "medicineCount": "{count, plural, =1{1 medicine} other{{count} medicines}}",
-  "@medicineCount": {"placeholders": {"count": {"type": "int"}}},
+  "@medicineCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "nameLabel": "Name",
-
   "checkMedicine": "Check medicine",
   "editMedicine": "Edit medicine",
   "addMedicine": "Add medicine",
   "fromBarcodeFound": "From the barcode: AIC {aic}, found in AIFA's medicine list.",
-  "@fromBarcodeFound": {"placeholders": {"aic": {"type": "String"}}},
+  "@fromBarcodeFound": {
+    "placeholders": {
+      "aic": {
+        "type": "String"
+      }
+    }
+  },
   "couldntReadLabel": "Couldn't read the label. Please type it in.",
   "fromBarcodeInPhoto": "From the barcode in the photo: AIC {aic}, found in AIFA's medicine list.",
-  "@fromBarcodeInPhoto": {"placeholders": {"aic": {"type": "String"}}},
+  "@fromBarcodeInPhoto": {
+    "placeholders": {
+      "aic": {
+        "type": "String"
+      }
+    }
+  },
   "barcodeNotInList": "The barcode (AIC {aic}) isn't in AIFA's list, so the text in the photo was read.",
-  "@barcodeNotInList": {"placeholders": {"aic": {"type": "String"}}},
+  "@barcodeNotInList": {
+    "placeholders": {
+      "aic": {
+        "type": "String"
+      }
+    }
+  },
   "readFromText": "Read from the text in the photo. Check it and fix anything that is wrong.",
   "photoDeleted": "The photo has been deleted.",
   "photoDeletedOnSave": "The photo is deleted when you save, unless you keep it.",
   "medicineSaved": "{name} saved",
-  "@medicineSaved": {"placeholders": {"name": {"type": "String"}}},
+  "@medicineSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "deleteMedicineQuestion": "Delete {name}?",
-  "@deleteMedicineQuestion": {"placeholders": {"name": {"type": "String"}}},
+  "@deleteMedicineQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "medicineArchived": "{name} archived",
-  "@medicineArchived": {"placeholders": {"name": {"type": "String"}}},
+  "@medicineArchived": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "medicineRestored": "{name} restored",
-  "@medicineRestored": {"placeholders": {"name": {"type": "String"}}},
+  "@medicineRestored": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "medicineMoved": "{name} moved to {group}",
-  "@medicineMoved": {"placeholders": {"name": {"type": "String"}, "group": {"type": "String"}}},
-  "allCount": "All ({count})",
-  "@allCount": {"placeholders": {"count": {"type": "int"}}},
-  "groupCount": "{group} ({count})",
-  "@groupCount": {"placeholders": {"group": {"type": "String"}, "count": {"type": "int"}}},
-  "emptyGroupHint": "Nothing here yet. Hold a medicine and drop it on this chip, or pick the tag in its form.",
+  "@medicineMoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "group": {
+        "type": "String"
+      }
+    }
+  },
   "dragHint": "Hold a medicine and drag it to another group to change its tag.",
   "deleteProfileQuestion": "Delete {name} and all their medicines?",
-  "@deleteProfileQuestion": {"placeholders": {"name": {"type": "String"}}},
+  "@deleteProfileQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "scanBox": "Scan box",
-  "addByHand": "Add by hand",
   "deleteProfile": "Delete profile",
   "takingCount": "Taking ({count})",
-  "@takingCount": {"placeholders": {"count": {"type": "int"}}},
+  "@takingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "archivedCount": "Archived ({count})",
-  "@archivedCount": {"placeholders": {"count": {"type": "int"}}},
+  "@archivedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noArchivedTitle": "No archived medicines",
   "noArchivedMessage": "When someone stops taking a medicine, tap Archive on it and it moves here.",
   "noMedicinesTitle": "No medicines yet",
   "noMedicinesMessage": "Tap Scan box to read a medicine box. Only what you check and save is kept, encrypted on this phone.",
-  "restoreMedicine": "Restore {name}",
-  "@restoreMedicine": {"placeholders": {"name": {"type": "String"}}},
-  "archiveMedicine": "Archive {name}",
-  "@archiveMedicine": {"placeholders": {"name": {"type": "String"}}},
-  "deleteMedicine": "Delete {name}",
-  "@deleteMedicine": {"placeholders": {"name": {"type": "String"}}},
   "readingLabel": "Reading the label…",
   "happensOnPhone": "This happens on your phone.",
   "moveTo": "Move to {group}",
-  "@moveTo": {"placeholders": {"group": {"type": "String"}}},
+  "@moveTo": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
   "moveMedicineTo": "Move {name} to",
-  "@moveMedicineTo": {"placeholders": {"name": {"type": "String"}}},
+  "@moveMedicineTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "moveToMenu": "Move to…",
-
   "tagMorning": "Morning",
   "tagNoon": "Noon",
   "tagEvening": "Evening",
   "noTag": "No tag",
-
   "savedEncrypted": "Saved encrypted on this phone only.",
   "required": "Required",
   "strengthField": "Strength (optional)",
@@ -106,21 +177,53 @@
   "discardChangesMessage": "The changes haven't been saved.",
   "keepEditing": "Keep editing",
   "discard": "Discard",
-
   "backupSaved": "Backup saved. Keep the password safe: without it the backup can't be opened.",
   "profilesCount": "{count, plural, =1{1 profile} other{{count} profiles}}",
-  "@profilesCount": {"placeholders": {"count": {"type": "int"}}},
+  "@profilesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "backupCounts": "{profiles} and {medicines}",
-  "@backupCounts": {"placeholders": {"profiles": {"type": "String"}, "medicines": {"type": "String"}}},
+  "@backupCounts": {
+    "placeholders": {
+      "profiles": {
+        "type": "String"
+      },
+      "medicines": {
+        "type": "String"
+      }
+    }
+  },
   "backupImported": "Backup imported: {counts}.",
-  "@backupImported": {"placeholders": {"counts": {"type": "String"}}},
+  "@backupImported": {
+    "placeholders": {
+      "counts": {
+        "type": "String"
+      }
+    }
+  },
   "replaceTitle": "Replace everything on this phone?",
   "replaceMessage": "The backup has {counts}. What is on this phone now will be replaced by it.",
-  "@replaceMessage": {"placeholders": {"counts": {"type": "String"}}},
+  "@replaceMessage": {
+    "placeholders": {
+      "counts": {
+        "type": "String"
+      }
+    }
+  },
   "replace": "Replace",
   "encrypting": "Encrypting…",
   "atLeastChars": "At least {count} characters",
-  "@atLeastChars": {"placeholders": {"count": {"type": "int"}}},
+  "@atLeastChars": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "passwordsDontMatch": "The passwords don't match",
   "exportBackupMessage": "The backup holds every profile, medicine and kept photo, encrypted with a password you choose. You need the password to import it, and nobody can open it without, not even you if it's forgotten.",
   "password": "Password",
@@ -131,14 +234,18 @@
   "backupNotBackup": "This file isn't a Medicine Archive backup.",
   "backupWrongPassword": "Wrong password, or the file is damaged.",
   "backupDamaged": "The file is damaged.",
-
   "lockedTitle": "Medicine Archive is locked",
   "lockedMessage": "Use your fingerprint, face or phone PIN to open it.",
   "unlock": "Unlock",
   "unlockReason": "Unlock your medicine archive",
   "archiveCantOpen": "The archive couldn't be opened. {detail}.",
-  "@archiveCantOpen": {"placeholders": {"detail": {"type": "String"}}},
-
+  "@archiveCantOpen": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
   "scanBarcode": "Scan barcode",
   "pointCamera": "Point the camera at the barcode on the box (the AIC code on the bollino).",
   "noBarcodeTakePhoto": "No barcode? Take a photo",
@@ -158,7 +265,6 @@
   "eanText": "13 digits, often starting with 80. It's only a product number, so the app skips it. If the box only has this one, take a photo instead.",
   "aifaCredit": "Medicine names come from AIFA's open data (Agenzia Italiana del Farmaco), adapted for the app. Licence: CC BY 4.0.",
   "gotIt": "Got it",
-
   "onboarding1Title": "How many times has someone asked you which medicines you take?",
   "onboarding1Body": "At the doctor's, at the pharmacy, in the emergency room… and the boxes are at home.",
   "onboarding2Title": "Now that problem is solved",
@@ -170,5 +276,51 @@
   "skip": "Skip",
   "letsStart": "OK, let's start",
   "stepOf": "Step {step} of {total}",
-  "@stepOf": {"placeholders": {"step": {"type": "int"}, "total": {"type": "int"}}}
+  "@stepOf": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "optionsFor": "Options for {name}",
+  "@optionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "edit": "Edit",
+  "archiveStopped": "Archive (stopped taking it)",
+  "restore": "Restore",
+  "alsoTags": "also {tags}",
+  "@alsoTags": {
+    "placeholders": {
+      "tags": {
+        "type": "String"
+      }
+    }
+  },
+  "searchMedicines": "Search {name}'s medicines",
+  "@searchMedicines": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noMatch": "No medicine matches \"{query}\"",
+  "@noMatch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "typeItIn": "Type it in",
+  "clearSearch": "Clear search"
 }
