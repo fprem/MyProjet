@@ -291,24 +291,6 @@ abstract class AppLocalizations {
   /// **'{name} moved to {group}'**
   String medicineMoved(String name, String group);
 
-  /// No description provided for @allCount.
-  ///
-  /// In en, this message translates to:
-  /// **'All ({count})'**
-  String allCount(int count);
-
-  /// No description provided for @groupCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{group} ({count})'**
-  String groupCount(String group, int count);
-
-  /// No description provided for @emptyGroupHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Nothing here yet. Hold a medicine and drop it on this chip, or pick the tag in its form.'**
-  String get emptyGroupHint;
-
   /// No description provided for @dragHint.
   ///
   /// In en, this message translates to:
@@ -326,12 +308,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Scan box'**
   String get scanBox;
-
-  /// No description provided for @addByHand.
-  ///
-  /// In en, this message translates to:
-  /// **'Add by hand'**
-  String get addByHand;
 
   /// No description provided for @deleteProfile.
   ///
@@ -374,24 +350,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap Scan box to read a medicine box. Only what you check and save is kept, encrypted on this phone.'**
   String get noMedicinesMessage;
-
-  /// No description provided for @restoreMedicine.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore {name}'**
-  String restoreMedicine(String name);
-
-  /// No description provided for @archiveMedicine.
-  ///
-  /// In en, this message translates to:
-  /// **'Archive {name}'**
-  String archiveMedicine(String name);
-
-  /// No description provided for @deleteMedicine.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete {name}'**
-  String deleteMedicine(String name);
 
   /// No description provided for @readingLabel.
   ///
@@ -914,6 +872,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Step {step} of {total}'**
   String stepOf(int step, int total);
+
+  /// No description provided for @optionsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Options for {name}'**
+  String optionsFor(String name);
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @archiveStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive (stopped taking it)'**
+  String get archiveStopped;
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @alsoTags.
+  ///
+  /// In en, this message translates to:
+  /// **'also {tags}'**
+  String alsoTags(String tags);
+
+  /// No description provided for @searchMedicines.
+  ///
+  /// In en, this message translates to:
+  /// **'Search {name}\'s medicines'**
+  String searchMedicines(String name);
+
+  /// No description provided for @noMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No medicine matches \"{query}\"'**
+  String noMatch(String query);
+
+  /// No description provided for @typeItIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Type it in'**
+  String get typeItIn;
+
+  /// No description provided for @clearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

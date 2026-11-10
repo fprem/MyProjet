@@ -157,7 +157,7 @@ void main() {
     await pumpApp(tester);
     await tester.tap(find.text('Anna'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Add by hand'));
+    await tester.tap(find.text('Type it in'));
     await tester.pumpAndSettle();
     // Only the name is required; strength and quantity are optional.
     expect(find.text('Required'), findsOneWidget);

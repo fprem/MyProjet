@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:medicine_archive/app.dart';
 import 'package:medicine_archive/data/archive_repository.dart';
 import 'package:medicine_archive/scan/label_parser.dart';
-import 'package:medicine_archive/ui/brand.dart';
 
 import 'fakes.dart';
 
@@ -125,7 +124,7 @@ void main() {
     testWidgets('adds a medicine by hand', (tester) async {
       await pumpApp(tester);
       await openProfile(tester, 'Anna');
-      await tester.tap(find.byTooltip('Add by hand'));
+      await tester.tap(find.text('Type it in'));
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Aspirina');
       await tester.enterText(find.widgetWithText(TextField, 'Quantity (optional)'), '10');
@@ -133,13 +132,13 @@ void main() {
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
       expect(find.text('Aspirina'), findsOneWidget);
-      expect(find.text('10'), findsOneWidget);
+      expect(find.text('10'), findsOneWidget); // the detail line
     });
 
     testWidgets('Save is disabled while the name is empty', (tester) async {
       await pumpApp(tester);
       await openProfile(tester, 'Anna');
-      await tester.tap(find.byTooltip('Add by hand'));
+      await tester.tap(find.text('Type it in'));
       await tester.pumpAndSettle();
       final save = find.widgetWithText(FilledButton, 'Save');
       expect(tester.widget<FilledButton>(save).onPressed, isNull);
@@ -152,9 +151,11 @@ void main() {
       await tester.tap(find.text('Anna'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byTooltip('Delete Aspirina'));
+      await tester.tap(find.byTooltip('Options for Aspirina'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
       await tester.pumpAndSettle();
 
       expect(find.text('No medicines yet'), findsOneWidget);
@@ -183,14 +184,13 @@ void main() {
 
       expect(repo.medicinesOf(repo.profiles.single.id).single.strength, '0,5 mg');
       expect(find.text('Delorazepam ratiopharm Italia'), findsOneWidget);
-      expect(find.text('0,5 mg'), findsOneWidget);
-      expect(find.text('20 compresse'), findsOneWidget);
+      expect(find.text('0,5 mg · 20 compresse'), findsOneWidget);
     });
 
     testWidgets('the strength can be typed in or corrected', (tester) async {
       await pumpApp(tester);
       await openProfile(tester, 'Anna');
-      await tester.tap(find.byTooltip('Add by hand'));
+      await tester.tap(find.text('Type it in'));
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Delorazepam');
       await tester.enterText(find.widgetWithText(TextField, 'Strength (optional)'), '1 mg');
@@ -219,8 +219,8 @@ void main() {
       await pumpApp(tester);
       await tester.tap(find.text('Anna'));
       await tester.pumpAndSettle();
-      expect(find.text('0,5 mg'), findsOneWidget);
-      expect(find.text('1 mg'), findsOneWidget);
+      expect(find.text('0,5 mg · 20'), findsOneWidget);
+      expect(find.text('1 mg · 30'), findsOneWidget);
     });
   });
 
@@ -228,7 +228,7 @@ void main() {
     testWidgets('saves a medicine typed with only its name', (tester) async {
       await pumpApp(tester);
       await openProfile(tester, 'Anna');
-      await tester.tap(find.byTooltip('Add by hand'));
+      await tester.tap(find.text('Type it in'));
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Delorazepam');
       await tester.pump();
@@ -238,7 +238,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Delorazepam'), findsOneWidget);
-      expect(find.byType(QuantityPill), findsNothing);
+      expect(find.textContaining('·'), findsNothing); // no detail line
       expect(repo.medicinesOf(repo.profiles.single.id).single.quantity, isNull);
     });
 

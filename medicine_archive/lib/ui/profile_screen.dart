@@ -11,8 +11,16 @@ import '../scan/barcode_scan.dart';
 import '../scan/photo_scanner.dart';
 import 'brand.dart';
 import 'empty_state.dart';
-import 'fitted_name.dart';
 import 'medicine_form_screen.dart';
+
+/// A tab gets a search field once it has more medicines than this.
+const searchFrom = 8;
+
+/// Tighter than the theme's, so both buttons fit side by side on most phones.
+const _fabPadding = EdgeInsetsDirectional.symmetric(horizontal: 20);
+
+/// Room under the list so the last card can scroll clear of the buttons.
+const _bottomRoom = 176.0;
 
 /// One person's medicines, with Scan box as the main action.
 class ProfileScreen extends StatefulWidget {
@@ -41,8 +49,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// Which tab is shown: the medicines being taken, or the archived ones.
   bool _showArchived = false;
 
-  /// Which group the Taking tab shows: null for all of them, grouped.
-  ({String? tag})? _filter;
+  /// What is typed in the search field, shown once a tab has more than
+  /// [searchFrom] medicines.
+  final _search = TextEditingController();
+
+  /// The box photos shown as thumbnails, decrypted once per medicine.
+  final _thumbs = <String, Future<Uint8List?>>{};
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   ArchiveRepository get _repo => widget.repository;
 
@@ -148,6 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         photo: draft.keepPhoto ? draft.photo ?? photo : null,
       );
     } else {
+      _thumbs.remove(editing.id);
       if (draft.keepPhoto && draft.photo != null && !identical(draft.photo, photo)) {
         await _repo.setPhoto(editing.id, draft.photo!);
       } else if (editing.hasPhoto && !draft.keepPhoto) {
@@ -212,50 +231,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// [moveTargets]: the groups the medicine can be moved to from [group],
-  /// offered to TalkBack and Switch Access as the same move that dragging does.
-  Widget _card(
-    Medicine medicine, {
-    String? group,
-    bool draggable = false,
-    List<String?> moveTargets = const [],
-  }) {
+  /// Every group [medicine] can be moved to from [group]: the times of day,
+  /// the person's own tags, and No tag when it has a tag to leave.
+  List<String?> _moveTargets(Medicine medicine, String? group) => [
+    for (final tag in [...MedicineTags.fixed, ..._repo.customTagsOf(widget.profile.id)])
+      if (tag != group) tag,
+    if (group != null) null,
+  ];
+
+  Future<void> _showOptions(Medicine medicine, String? group) async {
+    final choice = await showModalBottomSheet<_Option>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => _OptionsSheet(medicine: medicine),
+    );
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case _Option.edit:
+        await _edit(medicine);
+      case _Option.move:
+        final to = await showModalBottomSheet<({String? tag})>(
+          context: context,
+          showDragHandle: true,
+          isScrollControlled: true,
+          builder: (context) =>
+              _MoveSheet(medicine: medicine, targets: _moveTargets(medicine, group)),
+        );
+        if (to != null) await _move(_Dragged(medicine, group), to.tag);
+      case _Option.archive:
+        await _setArchived(medicine, !medicine.archived);
+      case _Option.delete:
+        await _deleteMedicine(medicine);
+    }
+  }
+
+  Future<void> _edit(Medicine medicine) => _openForm(
+    title: context.l10n.editMedicine,
+    editing: medicine,
+    initial: LabelResult(
+      name: medicine.name,
+      strength: medicine.strength,
+      quantity: medicine.quantity,
+      unit: medicine.unit,
+    ),
+  );
+
+  /// One medicine. In a group ([grouped]) it says which other groups it is
+  /// in and can be dragged to another group; elsewhere it lists its tags.
+  Widget _card(Medicine medicine, {String? group, bool grouped = false}) {
     final l10n = context.l10n;
+    final others = [
+      for (final t in medicine.tags)
+        if (t != group) l10n.tag(t),
+    ];
     final card = _MedicineCard(
       medicine: medicine,
-      otherTags: [
-        for (final t in medicine.tags)
-          if (t != group) t,
+      thumbnail: medicine.hasPhoto
+          ? _thumbs.putIfAbsent(medicine.id, () => _repo.photoOf(medicine))
+          : null,
+      details: [
+        if (medicine.strength.isNotEmpty) medicine.strength,
+        if (medicine.quantity != null) medicine.quantityLabel,
+        if (grouped && others.isNotEmpty) l10n.alsoTags(others.join(', ')),
+        if (!grouped && medicine.tags.isNotEmpty) medicine.tags.map(l10n.tag).join(', '),
       ],
-      showTags: group == null && !draggable,
-      onTap: () => _openForm(
-        title: l10n.editMedicine,
-        editing: medicine,
-        initial: LabelResult(
-          name: medicine.name,
-          strength: medicine.strength,
-          quantity: medicine.quantity,
-          unit: medicine.unit,
-        ),
-      ),
-      onArchive: () => _setArchived(medicine, !medicine.archived),
-      onDelete: () => _deleteMedicine(medicine),
+      onTap: () => _edit(medicine),
+      onOptions: () => _showOptions(medicine, group),
     );
-    final item = !draggable
+    final item = !grouped
         ? card
         : Semantics(
             customSemanticsActions: {
-              for (final to in moveTargets)
-                if (to != group)
-                  CustomSemanticsAction(label: l10n.moveTo(l10n.group(to))): () =>
-                      _move(_Dragged(medicine, group), to),
+              for (final to in _moveTargets(medicine, group))
+                CustomSemanticsAction(label: l10n.moveTo(l10n.group(to))): () =>
+                    _move(_Dragged(medicine, group), to),
             },
             child: LayoutBuilder(
               builder: (context, constraints) => LongPressDraggable<_Dragged>(
                 data: _Dragged(medicine, group),
                 hapticFeedbackOnStart: true,
-                // The card hangs below the finger, so the group or chip under
-                // it stays in sight and lights up.
+                // The card hangs below the finger, so the group under it
+                // stays in sight and lights up.
                 dragAnchorStrategy: (_, _, _) => Offset(constraints.maxWidth * 0.375, -20),
                 feedback: Material(
                   type: MaterialType.transparency,
@@ -272,91 +329,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Padding(padding: const EdgeInsets.only(bottom: 10), child: item);
   }
 
-  /// The Taking tab: chips to pick a group, then the medicines grouped by tag.
+  /// The Taking tab: the medicines grouped by tag, or a plain list while
+  /// none has a tag.
   List<Widget> _taking(List<Medicine> taking) {
-    final groups = groupByTag(taking);
-    final hasTags = taking.any((m) => m.tags.isNotEmpty);
-    int count(String? tag) => groups.where((g) => g.tag == tag).firstOrNull?.medicines.length ?? 0;
-    final chipTags = <String?>[
-      ...MedicineTags.fixed,
-      for (final g in groups)
-        if (g.tag != null && !MedicineTags.isFixed(g.tag!)) g.tag,
-      if (hasTags) null,
-    ];
-    final filter = _filter;
     final l10n = context.l10n;
-    // Every group a medicine can go to: the times of day, the person's own
-    // tags, and No tag once something is tagged.
-    final targets = <String?>[...chipTags, if (!hasTags) null];
-    final chips = SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        spacing: 8,
-        children: [
-          ChoiceChip(
-            key: const ValueKey('filter-all'),
-            label: Text(l10n.allCount(taking.length)),
-            selected: filter == null,
-            onSelected: (_) => setState(() => _filter = null),
-          ),
-          for (final tag in chipTags)
-            _DropZone(
-              tag: tag,
-              onDrop: _move,
-              shape: const StadiumBorder(),
-              child: ChoiceChip(
-                key: ValueKey('filter-${tag ?? 'none'}'),
-                avatar: filter?.tag == tag && filter != null ? null : Icon(tagIcon(tag), size: 18),
-                label: Text(l10n.groupCount(l10n.group(tag), count(tag))),
-                selected: filter != null && filter.tag == tag,
-                onSelected: (_) => setState(() => _filter = (tag: tag)),
-              ),
-            ),
-        ],
-      ),
-    );
-
-    final List<Widget> list;
-    if (filter != null) {
-      final shown = groups.where((g) => g.tag == filter.tag).firstOrNull?.medicines ?? const [];
-      list = [
-        if (shown.isEmpty) _Hint(l10n.emptyGroupHint),
-        for (final m in shown) _card(m, group: filter.tag, draggable: true, moveTargets: targets),
-      ];
-    } else if (!hasTags) {
-      list = [for (final m in taking) _card(m, draggable: true, moveTargets: targets)];
-    } else {
-      list = [
-        for (final g in groups)
-          _DropZone(
-            key: ValueKey('section-${g.tag ?? 'none'}'),
-            tag: g.tag,
-            onDrop: _move,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _GroupHeader(tag: g.tag, count: g.medicines.length),
-                for (final m in g.medicines)
-                  _card(m, group: g.tag, draggable: true, moveTargets: targets),
-              ],
-            ),
-          ),
+    final hasTags = taking.any((m) => m.tags.isNotEmpty);
+    if (!hasTags) {
+      return [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, _bottomRoom),
+          sliver: SliverList.list(children: [for (final m in taking) _card(m)]),
+        ),
       ];
     }
     return [
-      SliverToBoxAdapter(child: chips),
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
           child: _Hint(l10n.dragHint),
         ),
       ),
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 112),
-        sliver: SliverList.list(children: list),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, _bottomRoom),
+        sliver: SliverList.list(
+          children: [
+            for (final g in groupByTag(taking))
+              _DropZone(
+                key: ValueKey('section-${g.tag ?? 'none'}'),
+                tag: g.tag,
+                onDrop: _move,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _GroupHeader(tag: g.tag, count: g.medicines.length),
+                    for (final m in g.medicines) _card(m, group: g.tag, grouped: true),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
+    ];
+  }
+
+  /// [medicines] whose name has what is typed in the search field.
+  List<Medicine> _matching(List<Medicine> medicines) {
+    final query = _search.text.trim().toLowerCase();
+    if (query.isEmpty || medicines.length <= searchFrom) return medicines;
+    return [
+      for (final m in medicines)
+        if (m.name.toLowerCase().contains(query)) m,
     ];
   }
 
@@ -375,22 +397,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _reading
           ? null
-          : FloatingActionButton.extended(
-              heroTag: null,
-              onPressed: _scan,
-              icon: const Icon(Icons.document_scanner_outlined),
-              label: Text(l10n.scanBox),
+          : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              // Side by side, or one above the other when the text is large.
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  FloatingActionButton.extended(
+                    heroTag: null,
+                    extendedPadding: _fabPadding,
+                    onPressed: _scan,
+                    icon: const Icon(Icons.document_scanner_outlined),
+                    label: Text(l10n.scanBox),
+                  ),
+                  FloatingActionButton.extended(
+                    heroTag: null,
+                    extendedPadding: _fabPadding,
+                    backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                    foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+                    onPressed: () => _openForm(title: l10n.addMedicine),
+                    icon: const Icon(Icons.edit_outlined),
+                    label: Text(l10n.typeItIn),
+                  ),
+                ],
+              ),
             ),
       body: CustomScrollView(
         slivers: [
           SliverAppBar.large(
             title: Text(widget.profile.name),
             actions: [
-              IconButton(
-                tooltip: l10n.addByHand,
-                icon: const Icon(Icons.edit_note_rounded),
-                onPressed: _reading ? null : () => _openForm(title: l10n.addMedicine),
-              ),
               PopupMenuButton<void>(
                 tooltip: l10n.moreOptions,
                 itemBuilder: (_) => [
@@ -407,7 +446,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               builder: (context, _) {
                 final taking = _repo.medicinesOf(widget.profile.id);
                 final archived = _repo.medicinesOf(widget.profile.id, archived: true);
-                final medicines = _showArchived ? archived : taking;
+                final all = _showArchived ? archived : taking;
+                final medicines = _matching(all);
+                final searching = all.length > searchFrom;
                 return SliverMainAxisGroup(
                   slivers: [
                     SliverToBoxAdapter(
@@ -432,7 +473,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    if (medicines.isEmpty)
+                    if (searching)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: TextField(
+                            controller: _search,
+                            onChanged: (_) => setState(() {}),
+                            textInputAction: TextInputAction.search,
+                            decoration: InputDecoration(
+                              labelText: l10n.searchMedicines(widget.profile.name),
+                              prefixIcon: const Icon(Icons.search_rounded),
+                              suffixIcon: _search.text.isEmpty
+                                  ? null
+                                  : IconButton(
+                                      tooltip: l10n.clearSearch,
+                                      icon: const Icon(Icons.close_rounded),
+                                      onPressed: () => setState(_search.clear),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (searching && medicines.isEmpty)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                          child: _Hint(l10n.noMatch(_search.text.trim())),
+                        ),
+                      )
+                    else if (medicines.isEmpty)
                       SliverFillRemaining(
                         hasScrollBody: false,
                         child: _showArchived
@@ -447,7 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       )
                     else if (_showArchived)
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, _bottomRoom),
                         sliver: SliverList.list(children: [for (final m in medicines) _card(m)]),
                       )
                     else
@@ -465,88 +535,170 @@ class _ProfileScreenState extends State<ProfileScreen> {
 class _MedicineCard extends StatelessWidget {
   const _MedicineCard({
     required this.medicine,
+    required this.details,
     required this.onTap,
-    required this.onArchive,
-    required this.onDelete,
-    this.otherTags = const [],
-    this.showTags = false,
+    required this.onOptions,
+    this.thumbnail,
   });
 
   final Medicine medicine;
 
-  /// Its tags other than the group it is shown in, as small hints.
-  final List<String> otherTags;
+  /// Strength, pack size and tags, shown on one line under the name.
+  final List<String> details;
 
-  /// Show [otherTags] as plain tags rather than "+ Evening" hints.
-  final bool showTags;
+  /// The kept box photo, while it is being decrypted.
+  final Future<Uint8List?>? thumbnail;
   final VoidCallback onTap;
-
-  /// Archives the medicine, or restores it when it is archived.
-  final VoidCallback onArchive;
-  final VoidCallback onDelete;
+  final VoidCallback onOptions;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final l10n = context.l10n;
-    final hasDetails =
-        medicine.strength.isNotEmpty || medicine.quantity != null || otherTags.isNotEmpty;
     return Card(
       child: ListTile(
-        minTileHeight: 84,
+        minTileHeight: 72,
         onTap: onTap,
-        leading: ExcludeSemantics(
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerHighest,
-              shape: BoxShape.circle,
+        contentPadding: const EdgeInsetsDirectional.fromSTEB(16, 8, 4, 8),
+        leading: switch (thumbnail) {
+          final photo? => ExcludeSemantics(
+            child: ClipRRect(
+              key: ValueKey('thumb-${medicine.id}'),
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox.square(
+                dimension: 48,
+                child: FutureBuilder(
+                  future: photo,
+                  builder: (context, snapshot) => switch (snapshot.data) {
+                    final bytes? => Image.memory(
+                      bytes,
+                      fit: BoxFit.cover,
+                      cacheWidth: (48 * MediaQuery.devicePixelRatioOf(context)).round(),
+                      errorBuilder: (_, _, _) => ColoredBox(color: scheme.surfaceContainerHighest),
+                    ),
+                    null => ColoredBox(color: scheme.surfaceContainerHighest),
+                  },
+                ),
+              ),
             ),
-            child: Icon(Icons.medication_rounded, color: scheme.primary),
           ),
-        ),
-        title: FittedName(
+          null => null,
+        },
+        title: Text(
           medicine.name,
           style: theme.textTheme.titleLarge!.copyWith(color: scheme.onSurface),
         ),
-        subtitle: !hasDetails
+        subtitle: details.isEmpty
             ? null
             : Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      if (medicine.strength.isNotEmpty) StrengthTag(medicine.strength),
-                      if (medicine.quantity != null) QuantityPill(medicine.quantityLabel),
-                      for (final t in otherTags)
-                        _TagHint(showTags ? l10n.tag(t) : '+ ${l10n.tag(t)}'),
-                    ],
-                  ),
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  details.join(' · '),
+                  style: theme.textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
                 ),
               ),
-        trailing: Row(
+        trailing: IconButton(
+          tooltip: context.l10n.optionsFor(medicine.name),
+          icon: Icon(Icons.more_vert_rounded, color: scheme.onSurfaceVariant),
+          onPressed: onOptions,
+        ),
+      ),
+    );
+  }
+}
+
+enum _Option { edit, move, archive, delete }
+
+/// What can be done with one medicine. Delete is last and set apart, so it
+/// is not hit by accident.
+class _OptionsSheet extends StatelessWidget {
+  const _OptionsSheet({required this.medicine});
+  final Medicine medicine;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    void pick(_Option o) => Navigator.pop(context, o);
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            IconButton(
-              tooltip: medicine.archived
-                  ? l10n.restoreMedicine(medicine.name)
-                  : l10n.archiveMedicine(medicine.name),
-              icon: Icon(
-                medicine.archived ? Icons.unarchive_outlined : Icons.inventory_2_outlined,
-                color: scheme.onSurfaceVariant,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Semantics(
+                header: true,
+                child: Text(medicine.name, style: Theme.of(context).textTheme.titleLarge),
               ),
-              onPressed: onArchive,
             ),
-            IconButton(
-              tooltip: l10n.deleteMedicine(medicine.name),
-              icon: Icon(Icons.delete_outline_rounded, color: scheme.onSurfaceVariant),
-              onPressed: onDelete,
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(l10n.edit),
+              onTap: () => pick(_Option.edit),
             ),
+            if (!medicine.archived)
+              ListTile(
+                leading: const Icon(Icons.drive_file_move_outline),
+                title: Text(l10n.moveToMenu),
+                onTap: () => pick(_Option.move),
+              ),
+            ListTile(
+              leading: Icon(
+                medicine.archived ? Icons.unarchive_outlined : Icons.inventory_2_outlined,
+              ),
+              title: Text(medicine.archived ? l10n.restore : l10n.archiveStopped),
+              onTap: () => pick(_Option.archive),
+            ),
+            const Divider(indent: 16, endIndent: 16),
+            ListTile(
+              iconColor: scheme.error,
+              textColor: scheme.error,
+              leading: const Icon(Icons.delete_outline_rounded),
+              title: Text(l10n.delete),
+              onTap: () => pick(_Option.delete),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The groups a medicine can be moved to. Pops with the chosen one.
+class _MoveSheet extends StatelessWidget {
+  const _MoveSheet({required this.medicine, required this.targets});
+  final Medicine medicine;
+  final List<String?> targets;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Semantics(
+                header: true,
+                child: Text(
+                  l10n.moveMedicineTo(medicine.name),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            ),
+            for (final tag in targets)
+              ListTile(
+                leading: Icon(tagIcon(tag), color: Theme.of(context).colorScheme.primary),
+                title: Text(l10n.group(tag)),
+                onTap: () => Navigator.pop(context, (tag: tag)),
+              ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -592,17 +744,10 @@ class _Dragged {
 /// Where a dragged medicine can be dropped to get [tag] (null: No tag). It
 /// lights up while a medicine from another group is over it.
 class _DropZone extends StatelessWidget {
-  const _DropZone({
-    super.key,
-    required this.tag,
-    required this.onDrop,
-    required this.shape,
-    required this.child,
-  });
+  const _DropZone({super.key, required this.tag, required this.onDrop, required this.child});
 
   final String? tag;
   final void Function(_Dragged dragged, String? to) onDrop;
-  final ShapeBorder shape;
   final Widget child;
 
   @override
@@ -617,18 +762,12 @@ class _DropZone extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           decoration: ShapeDecoration(
             color: hot ? scheme.primaryContainer : Colors.transparent,
-            shape: shape is StadiumBorder
-                ? StadiumBorder(
-                    side: BorderSide(color: hot ? scheme.primary : Colors.transparent, width: 3),
-                  )
-                : RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                    side: BorderSide(color: hot ? scheme.primary : Colors.transparent, width: 2),
-                  ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+              side: BorderSide(color: hot ? scheme.primary : Colors.transparent, width: 2),
+            ),
           ),
-          padding: shape is StadiumBorder
-              ? EdgeInsets.zero
-              : const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
           child: child,
         );
       },
@@ -671,25 +810,6 @@ class _GroupHeader extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// One of a medicine's other tags, shown small on its card.
-class _TagHint extends StatelessWidget {
-  const _TagHint(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(text, style: theme.textTheme.labelMedium),
     );
   }
 }

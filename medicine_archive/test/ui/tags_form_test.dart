@@ -37,7 +37,7 @@ void main() {
       tester.widget<FilterChip>(chip(label)).selected;
 
   Future<void> addByHand(WidgetTester tester, String name) async {
-    await tester.tap(find.byTooltip('Add by hand'));
+    await tester.tap(find.text('Type it in'));
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextField, 'Name'), name);
     await tester.pump();

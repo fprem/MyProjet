@@ -12,9 +12,14 @@ read, and save it under the right profile.
   biggest text, plus the dosage such as "500 mg") and the pack size ("20
   compresse", "24 tablets", "100 ml").
 - **Tags:** give each medicine Morning, Noon or Evening (any of them) and
-  your own tags, such as "When needed". The list is grouped by tag, chips
-  on top show one group, and holding a medicine lets you drag it to another
-  group to change its tag (with Undo).
+  your own tags, such as "When needed". The list is grouped by tag, and
+  holding a medicine lets you drag it to another group to change its tag
+  (with Undo).
+- **The list:** each medicine shows its name at full size and one line with
+  strength, pack size and its other groups, plus the box photo if it was
+  kept. Its ⋮ button holds Edit, Move to…, Archive and, last, Delete. A
+  search field appears once a tab has more than 8 medicines. "Type it in"
+  next to Scan box adds a medicine by hand.
 - **Backup:** Export backup (menu on the profiles screen) saves every
   profile, medicine, tag and kept photo in one file, encrypted with a
   password you choose (PBKDF2 + AES-256-GCM). Import backup puts it back,
@@ -27,8 +32,8 @@ read, and save it under the right profile.
   regenerates the Dart code from them.
 - **Back swipe:** pages follow Android's predictive back gesture, and going
   back from a filled form asks before throwing it away.
-- **TalkBack:** each medicine on the Taking list has "Move to …" actions in
-  the TalkBack actions menu, the same move as dragging it.
+- **TalkBack:** each grouped medicine has "Move to …" actions in the
+  TalkBack actions menu, the same move as dragging it.
 - **Check before saving:** the guess always opens in a form to fix. If the
   label can't be read, the same form lets you type it.
 - **Photo deleted:** the photo file is deleted right after reading, whether

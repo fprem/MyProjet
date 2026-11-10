@@ -38,7 +38,7 @@ void main() {
       expect(find.text('1 farmaco'), findsOneWidget);
     });
 
-    testWidgets('a profile shows Italian groups, chips and the scan button', (tester) async {
+    testWidgets('a profile shows Italian groups, buttons and menu', (tester) async {
       final anna = await repo.createProfile('Anna');
       await repo.addMedicine(anna.id, name: 'Eutirox', tags: [MedicineTags.morning]);
       await repo.addMedicine(anna.id, name: 'Cardioaspirin', tags: [MedicineTags.evening]);
@@ -48,10 +48,16 @@ void main() {
 
       expect(find.text('Scansiona scatola'), findsOneWidget);
       expect(find.text('In uso (2)'), findsOneWidget);
-      expect(find.text('Tutti (2)'), findsOneWidget);
-      expect(find.text('Mattina'), findsOneWidget); // the group heading
-      expect(find.text('Mattina (1)'), findsOneWidget); // the chip
+      expect(find.text('Scrivi a mano'), findsOneWidget);
+      expect(find.text('Mattina'), findsOneWidget);
       expect(find.text('Sera'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Opzioni per Eutirox'));
+      await tester.pumpAndSettle();
+      expect(find.text('Modifica'), findsOneWidget);
+      expect(find.text('Sposta in…'), findsOneWidget);
+      expect(find.text('Archivia (non lo prende più)'), findsOneWidget);
+      expect(find.text('Elimina'), findsOneWidget);
     });
 
     testWidgets('the form after a scan is in Italian', (tester) async {

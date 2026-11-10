@@ -27,13 +27,20 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Picks [option] in the ⋮ menu of [name].
+  Future<void> menu(WidgetTester tester, String name, String option) async {
+    await tester.tap(find.byTooltip('Options for $name'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(option));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('Archive moves a medicine to the Archived tab', (tester) async {
     await repo.addMedicine(anna.id, name: 'Moment');
     await repo.addMedicine(anna.id, name: 'Aspirina');
     await pumpAnna(tester);
 
-    await tester.tap(find.byTooltip('Archive Moment'));
-    await tester.pumpAndSettle();
+    await menu(tester, 'Moment', 'Archive (stopped taking it)');
 
     expect(find.text('Moment'), findsNothing);
     expect(find.text('Aspirina'), findsOneWidget);
@@ -52,8 +59,7 @@ void main() {
 
     await tester.tap(find.text('Archived (1)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Restore Moment'));
-    await tester.pumpAndSettle();
+    await menu(tester, 'Moment', 'Restore');
 
     expect(repo.medicinesOf(anna.id).single.name, 'Moment');
     await tester.tap(find.text('Taking (1)'));
@@ -65,8 +71,7 @@ void main() {
     await repo.addMedicine(anna.id, name: 'Moment');
     await pumpAnna(tester);
 
-    await tester.tap(find.byTooltip('Archive Moment'));
-    await tester.pumpAndSettle();
+    await menu(tester, 'Moment', 'Archive (stopped taking it)');
     expect(find.text('Moment archived'), findsOneWidget);
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();

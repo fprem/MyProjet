@@ -62,13 +62,13 @@ void main() {
     expect(find.text('Taking (2)'), findsOneWidget); // the count is on the tab
   });
 
-  testWidgets('each medicine shows its quantity as a pill', (tester) async {
+  testWidgets('each medicine shows its quantity under its name', (tester) async {
     final anna = await repo.createProfile('Anna');
     await repo.addMedicine(anna.id, name: 'Aspirina', quantity: 10, unit: 'compresse');
     await pumpApp(tester);
     await tester.tap(find.text('Anna'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(QuantityPill, '10 compresse'), findsOneWidget);
+    expect(find.text('10 compresse'), findsOneWidget);
   });
 
   testWidgets('reading shows the scan frame', (tester) async {

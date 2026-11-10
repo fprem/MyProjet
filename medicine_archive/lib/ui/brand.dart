@@ -217,47 +217,6 @@ void drawViewfinder(Canvas canvas, Rect r, Color color, double stroke, double ar
   canvas.drawPath(path, paint);
 }
 
-/// A medicine's quantity, as a rounded pill ("20 compresse").
-class QuantityPill extends StatelessWidget {
-  const QuantityPill(this.label, {super.key});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: ShapeDecoration(color: scheme.primaryContainer, shape: const StadiumBorder()),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: scheme.onPrimaryContainer),
-      ),
-    );
-  }
-}
-
-/// A medicine's strength ("0,5 mg"), outlined so it reads apart from the
-/// quantity pill.
-class StrengthTag extends StatelessWidget {
-  const StrengthTag(this.label, {super.key});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: ShapeDecoration(
-        shape: StadiumBorder(side: BorderSide(color: scheme.primary, width: 1.5)),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
-      ),
-    );
-  }
-}
-
 /// A viewfinder with a line sweeping over it while the label is read. The
 /// line stands still when the system asks for less motion.
 class ScanFrame extends StatefulWidget {
