@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -35,6 +37,7 @@ Future<void> main() async {
   }
 
   final picker = ImagePicker();
+  final phoneColours = await _wallpaperColours();
   runApp(
     MedicineArchiveApp(
       repository: repository,
@@ -46,6 +49,7 @@ Future<void> main() async {
       scanBarcode: scanBarcodeLive,
       authenticate: deviceLock(reason: () => systemL10n().unlockReason),
       backupFiles: const DeviceBackupFiles(),
+      phoneColours: phoneColours,
       takePhoto: () async {
         final photo = await picker.pickImage(
           source: ImageSource.camera,
@@ -56,6 +60,20 @@ Future<void> main() async {
       },
     ),
   );
+}
+
+/// The wallpaper's colours on Android 12 and later; null on older phones.
+Future<PhoneColours?> _wallpaperColours() async {
+  try {
+    final palette = await DynamicColorPlugin.getCorePalette();
+    if (palette == null) return null;
+    return (
+      light: palette.toColorScheme(),
+      dark: palette.toColorScheme(brightness: Brightness.dark),
+    );
+  } on PlatformException {
+    return null;
+  }
 }
 
 class _ErrorApp extends StatelessWidget {

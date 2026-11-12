@@ -13,32 +13,40 @@ abstract final class Brand {
   static const ink = Color(0xFF0E3F3D);
   static const mint = Color(0xFF8FE3CF);
 
-  static ThemeData lightTheme() => _theme(
-    ColorScheme.fromSeed(seedColor: const Color(0xFF0E6B66)).copyWith(
-      primary: const Color(0xFF0E5F5B),
-      onPrimary: Colors.white,
-      primaryContainer: const Color(0xFFCDF3E8),
-      onPrimaryContainer: const Color(0xFF00201D),
-      surface: const Color(0xFFF2F6F4),
-      onSurface: const Color(0xFF0F1F1E),
-      onSurfaceVariant: const Color(0xFF3F4F4D),
-      surfaceContainerLowest: Colors.white,
-      surfaceContainerHighest: const Color(0xFFE1EAE7),
-    ),
+  /// The light look. With [phone], the wallpaper's colours replace the teal;
+  /// fonts and shapes stay the app's own.
+  static ThemeData lightTheme({ColorScheme? phone}) => _theme(
+    phone ??
+        ColorScheme.fromSeed(seedColor: const Color(0xFF0E6B66)).copyWith(
+          primary: const Color(0xFF0E5F5B),
+          onPrimary: Colors.white,
+          primaryContainer: const Color(0xFFCDF3E8),
+          onPrimaryContainer: const Color(0xFF00201D),
+          surface: const Color(0xFFF2F6F4),
+          onSurface: const Color(0xFF0F1F1E),
+          onSurfaceVariant: const Color(0xFF3F4F4D),
+          surfaceContainerLowest: Colors.white,
+          surfaceContainerHighest: const Color(0xFFE1EAE7),
+        ),
   );
 
-  static ThemeData darkTheme() => _theme(
-    ColorScheme.fromSeed(seedColor: const Color(0xFF0E6B66), brightness: Brightness.dark).copyWith(
-      primary: mint,
-      onPrimary: const Color(0xFF00382F),
-      primaryContainer: const Color(0xFF16524C),
-      onPrimaryContainer: const Color(0xFFCDF3E8),
-      surface: const Color(0xFF0B1514),
-      onSurface: const Color(0xFFE2EEEB),
-      onSurfaceVariant: const Color(0xFFB4C7C3),
-      surfaceContainerLowest: const Color(0xFF14211F),
-      surfaceContainerHighest: const Color(0xFF243331),
-    ),
+  /// The dark look; [phone] as for [lightTheme].
+  static ThemeData darkTheme({ColorScheme? phone}) => _theme(
+    phone ??
+        ColorScheme.fromSeed(
+          seedColor: const Color(0xFF0E6B66),
+          brightness: Brightness.dark,
+        ).copyWith(
+          primary: mint,
+          onPrimary: const Color(0xFF00382F),
+          primaryContainer: const Color(0xFF16524C),
+          onPrimaryContainer: const Color(0xFFCDF3E8),
+          surface: const Color(0xFF0B1514),
+          onSurface: const Color(0xFFE2EEEB),
+          onSurfaceVariant: const Color(0xFFB4C7C3),
+          surfaceContainerLowest: const Color(0xFF14211F),
+          surfaceContainerHighest: const Color(0xFF243331),
+        ),
   );
 
   static ThemeData _theme(ColorScheme scheme) {

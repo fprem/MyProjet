@@ -20,6 +20,7 @@ class ArchiveRepository extends ChangeNotifier {
   final List<Profile> _profiles = [];
   final List<Medicine> _medicines = [];
   bool _onboarded = false;
+  bool _phoneColours = false;
 
   static Future<ArchiveRepository> open(ArchiveStore store, {PhotoStore? photos}) async {
     final repo = ArchiveRepository._(store, photos ?? MemoryPhotoStore());
@@ -34,6 +35,7 @@ class ArchiveRepository extends ChangeNotifier {
       // Archives from before the welcome screens: anyone with profiles has
       // already found their way around.
       repo._onboarded = json['onboarded'] as bool? ?? repo._profiles.isNotEmpty;
+      repo._phoneColours = json['phoneColours'] as bool? ?? false;
     }
     return repo;
   }
@@ -43,6 +45,16 @@ class ArchiveRepository extends ChangeNotifier {
 
   Future<void> completeOnboarding() async {
     _onboarded = true;
+    await _save();
+  }
+
+  /// Whether the app takes its colours from the phone's wallpaper (Android
+  /// 12 and later) instead of the teal brand. Off unless the person asks.
+  /// Belongs to this phone, so backups don't carry it.
+  bool get phoneColours => _phoneColours;
+
+  Future<void> setPhoneColours(bool on) async {
+    _phoneColours = on;
     await _save();
   }
 
@@ -275,6 +287,7 @@ class ArchiveRepository extends ChangeNotifier {
       'profiles': _profiles.map((p) => p.toJson()).toList(),
       'medicines': _medicines.map((m) => m.toJson()).toList(),
       'onboarded': _onboarded,
+      'phoneColours': _phoneColours,
     });
     notifyListeners();
   }

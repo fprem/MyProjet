@@ -48,7 +48,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get noProfilesTitle => 'Ancora nessun profilo';
 
   @override
-  String get noProfilesMessage => 'Crea un profilo per ogni persona di cui tieni i farmaci.';
+  String get noProfilesMessage =>
+      'Crea un profilo per ogni persona di cui tieni i farmaci.';
 
   @override
   String get importABackup => 'Importa un backup';
@@ -85,7 +86,8 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get couldntReadLabel => 'Non è stato possibile leggere l\'etichetta. Scrivila tu.';
+  String get couldntReadLabel =>
+      'Non è stato possibile leggere l\'etichetta. Scrivila tu.';
 
   @override
   String fromBarcodeInPhoto(String aic) {
@@ -234,7 +236,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get keepBoxPhoto => 'Tieni la foto della scatola';
 
   @override
-  String get keepBoxPhotoSubtitle => 'Salvata cifrata, mostrata in questa pagina';
+  String get keepBoxPhotoSubtitle =>
+      'Salvata cifrata, mostrata in questa pagina';
 
   @override
   String get photoOfBox => 'Foto della scatola';
@@ -336,16 +339,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get export => 'Esporta';
 
   @override
-  String get typeBackupPassword => 'Scrivi la password con cui è stato fatto il backup.';
+  String get typeBackupPassword =>
+      'Scrivi la password con cui è stato fatto il backup.';
 
   @override
   String get open => 'Apri';
 
   @override
-  String get backupNotBackup => 'Questo file non è un backup di Medicine Archive.';
+  String get backupNotBackup =>
+      'Questo file non è un backup di Medicine Archive.';
 
   @override
-  String get backupWrongPassword => 'Password sbagliata, o il file è danneggiato.';
+  String get backupWrongPassword =>
+      'Password sbagliata, o il file è danneggiato.';
 
   @override
   String get backupDamaged => 'Il file è danneggiato.';
@@ -354,7 +360,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get lockedTitle => 'Medicine Archive è bloccato';
 
   @override
-  String get lockedMessage => 'Usa l\'impronta, il volto o il PIN del telefono per aprirlo.';
+  String get lockedMessage =>
+      'Usa l\'impronta, il volto o il PIN del telefono per aprirlo.';
 
   @override
   String get unlock => 'Sblocca';
@@ -371,7 +378,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get scanBarcode => 'Scansiona codice a barre';
 
   @override
-  String get pointCamera => 'Inquadra il codice a barre sulla scatola (il codice AIC sul bollino).';
+  String get pointCamera =>
+      'Inquadra il codice a barre sulla scatola (il codice AIC sul bollino).';
 
   @override
   String get noBarcodeTakePhoto => 'Niente codice? Scatta una foto';
@@ -389,7 +397,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get scanThis => 'Inquadra questo';
 
   @override
-  String get bollinoImageLabel => 'Un bollino: codice a barre a righe con A012745093 sotto';
+  String get bollinoImageLabel =>
+      'Un bollino: codice a barre a righe con A012745093 sotto';
 
   @override
   String get bollinoTitle => 'Il bollino';
@@ -399,7 +408,8 @@ class AppLocalizationsIt extends AppLocalizations {
       'L\'adesivo con un codice a barre a righe e sotto una A seguita da 9 cifre: è il codice AIC.';
 
   @override
-  String get datamatrixImageLabel => 'Un codice quadrato Data Matrix fatto di puntini';
+  String get datamatrixImageLabel =>
+      'Un codice quadrato Data Matrix fatto di puntini';
 
   @override
   String get datamatrixTitle => 'Il codice quadrato a puntini';
@@ -412,7 +422,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get notThis => 'Non questo';
 
   @override
-  String get eanImageLabel => 'Un codice a barre EAN-13 da negozio con 13 cifre';
+  String get eanImageLabel =>
+      'Un codice a barre EAN-13 da negozio con 13 cifre';
 
   @override
   String get eanTitle => 'Il codice a barre del negozio';
@@ -429,7 +440,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gotIt => 'Ho capito';
 
   @override
-  String get onboarding1Title => 'Quante volte ti hanno chiesto quali farmaci prendi?';
+  String get onboarding1Title =>
+      'Quante volte ti hanno chiesto quali farmaci prendi?';
 
   @override
   String get onboarding1Body =>
@@ -449,10 +461,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get onboarding3Body1 => 'Crea un profilo per ogni persona.';
 
   @override
-  String get onboarding3Body2 => 'Scansiona il codice a barre sulla scatola, o scatta una foto.';
+  String get onboarding3Body2 =>
+      'Scansiona il codice a barre sulla scatola, o scatta una foto.';
 
   @override
-  String get onboarding3Body3 => 'Controlla e salva. Tutto resta cifrato su questo telefono.';
+  String get onboarding3Body3 =>
+      'Controlla e salva. Tutto resta cifrato su questo telefono.';
 
   @override
   String get skip => 'Salta';
@@ -499,4 +513,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get clearSearch => 'Cancella la ricerca';
+
+  @override
+  String get usePhoneColours => 'Usa i colori del telefono';
 }
