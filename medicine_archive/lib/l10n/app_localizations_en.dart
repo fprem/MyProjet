@@ -48,7 +48,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noProfilesTitle => 'No profiles yet';
 
   @override
-  String get noProfilesMessage => 'Create a profile for each person whose medicines you keep.';
+  String get noProfilesMessage =>
+      'Create a profile for each person whose medicines you keep.';
 
   @override
   String get importABackup => 'Import a backup';
@@ -105,7 +106,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get photoDeleted => 'The photo has been deleted.';
 
   @override
-  String get photoDeletedOnSave => 'The photo is deleted when you save, unless you keep it.';
+  String get photoDeletedOnSave =>
+      'The photo is deleted when you save, unless you keep it.';
 
   @override
   String medicineSaved(String name) {
@@ -133,7 +135,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dragHint => 'Hold a medicine and drag it to another group to change its tag.';
+  String get dragHint =>
+      'Hold a medicine and drag it to another group to change its tag.';
 
   @override
   String deleteProfileQuestion(String name) {
@@ -334,7 +337,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get export => 'Export';
 
   @override
-  String get typeBackupPassword => 'Type the password the backup was made with.';
+  String get typeBackupPassword =>
+      'Type the password the backup was made with.';
 
   @override
   String get open => 'Open';
@@ -352,7 +356,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lockedTitle => 'Medicine Archive is locked';
 
   @override
-  String get lockedMessage => 'Use your fingerprint, face or phone PIN to open it.';
+  String get lockedMessage =>
+      'Use your fingerprint, face or phone PIN to open it.';
 
   @override
   String get unlock => 'Unlock';
@@ -388,7 +393,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scanThis => 'Scan this';
 
   @override
-  String get bollinoImageLabel => 'A bollino: striped barcode with A012745093 under it';
+  String get bollinoImageLabel =>
+      'A bollino: striped barcode with A012745093 under it';
 
   @override
   String get bollinoTitle => 'The bollino';
@@ -428,7 +434,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gotIt => 'Got it';
 
   @override
-  String get onboarding1Title => 'How many times has someone asked you which medicines you take?';
+  String get onboarding1Title =>
+      'How many times has someone asked you which medicines you take?';
 
   @override
   String get onboarding1Body =>
@@ -448,10 +455,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboarding3Body1 => 'Create a profile for each person.';
 
   @override
-  String get onboarding3Body2 => 'Scan the barcode on the box, or take a photo.';
+  String get onboarding3Body2 =>
+      'Scan the barcode on the box, or take a photo.';
 
   @override
-  String get onboarding3Body3 => 'Check and save. Everything stays encrypted on this phone.';
+  String get onboarding3Body3 =>
+      'Check and save. Everything stays encrypted on this phone.';
 
   @override
   String get skip => 'Skip';
@@ -498,4 +507,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearSearch => 'Clear search';
+
+  @override
+  String get usePhoneColours => 'Use my phone\'s colours';
 }

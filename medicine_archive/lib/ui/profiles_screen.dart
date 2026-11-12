@@ -20,6 +20,7 @@ class ProfilesScreen extends StatelessWidget {
     this.scanBarcode,
     this.backupFiles,
     this.backupCodec = const BackupCodec(),
+    this.canUsePhoneColours = false,
   });
 
   final ArchiveRepository repository;
@@ -28,6 +29,9 @@ class ProfilesScreen extends StatelessWidget {
   final ScanBarcode? scanBarcode;
   final BackupFiles? backupFiles;
   final BackupCodec backupCodec;
+
+  /// Whether the phone offers wallpaper colours, so the switch can show.
+  final bool canUsePhoneColours;
 
   Future<void> _createProfile(BuildContext context) async {
     final name = await showDialog<String>(
@@ -77,19 +81,27 @@ class ProfilesScreen extends StatelessWidget {
                   ],
                 ),
                 actions: [
-                  if (backupFiles case final files?)
+                  if (backupFiles != null || canUsePhoneColours)
                     PopupMenuButton<void>(
                       tooltip: l10n.moreOptions,
                       itemBuilder: (_) => [
-                        PopupMenuItem(
-                          onTap: () => exportBackup(context, repository, files, backupCodec),
-                          enabled: profiles.isNotEmpty,
-                          child: Text(l10n.exportBackup),
-                        ),
-                        PopupMenuItem(
-                          onTap: () => importBackup(context, repository, files, backupCodec),
-                          child: Text(l10n.importBackup),
-                        ),
+                        if (backupFiles case final files?) ...[
+                          PopupMenuItem(
+                            onTap: () => exportBackup(context, repository, files, backupCodec),
+                            enabled: profiles.isNotEmpty,
+                            child: Text(l10n.exportBackup),
+                          ),
+                          PopupMenuItem(
+                            onTap: () => importBackup(context, repository, files, backupCodec),
+                            child: Text(l10n.importBackup),
+                          ),
+                        ],
+                        if (canUsePhoneColours)
+                          CheckedPopupMenuItem(
+                            checked: repository.phoneColours,
+                            onTap: () => repository.setPhoneColours(!repository.phoneColours),
+                            child: Text(l10n.usePhoneColours),
+                          ),
                       ],
                     ),
                 ],

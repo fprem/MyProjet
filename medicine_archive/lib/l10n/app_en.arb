@@ -322,5 +322,9 @@
     }
   },
   "typeItIn": "Type it in",
-  "clearSearch": "Clear search"
+  "clearSearch": "Clear search",
+  "usePhoneColours": "Use my phone's colours",
+  "@usePhoneColours": {
+    "description": "Menu switch: take the app's colours from the wallpaper (Android 12+)."
+  }
 }

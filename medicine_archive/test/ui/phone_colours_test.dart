@@ -1,4 +1,6 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
+import 'package:material_color_utilities/material_color_utilities.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medicine_archive/app.dart';
 import 'package:medicine_archive/data/archive_repository.dart';
@@ -8,11 +10,15 @@ import 'package:medicine_archive/ui/profiles_screen.dart';
 
 import 'fakes.dart';
 
-/// What Android 12+ hands over from the wallpaper, here from a seed.
-PhoneColours wallpaper(Color seed) => (
-  light: ColorScheme.fromSeed(seedColor: seed),
-  dark: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark),
-);
+/// What Android 12+ hands over: the wallpaper's palette, turned into
+/// colours the same way the app does on a phone.
+PhoneColours wallpaper(Color seed) {
+  final palette = CorePalette.of(seed.toARGB32());
+  return (
+    light: palette.toColorScheme(),
+    dark: palette.toColorScheme(brightness: Brightness.dark),
+  );
+}
 
 const brandLight = Color(0xFF0E5F5B);
 const brandDark = Brand.mint;

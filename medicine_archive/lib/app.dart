@@ -18,6 +18,9 @@ const maxContentWidth = 720.0;
 /// Takes a photo and returns its file path, or null if the person cancelled.
 typedef TakePhoto = Future<String?> Function();
 
+/// The colours Android 12 and later take from the wallpaper.
+typedef PhoneColours = ({ColorScheme light, ColorScheme dark});
+
 class MedicineArchiveApp extends StatelessWidget {
   const MedicineArchiveApp({
     super.key,
@@ -30,6 +33,7 @@ class MedicineArchiveApp extends StatelessWidget {
     this.backupFiles,
     this.backupCodec = const BackupCodec(),
     this.locale,
+    this.phoneColours,
   });
 
   final ArchiveRepository repository;
@@ -52,8 +56,16 @@ class MedicineArchiveApp extends StatelessWidget {
   /// The language to show. Null follows the phone (Italian or English).
   final Locale? locale;
 
+  /// The wallpaper's colours, offered as a switch. Null on phones without
+  /// them, where the app keeps its teal.
+  final PhoneColours? phoneColours;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      ListenableBuilder(listenable: repository, builder: (context, _) => _app());
+
+  Widget _app() {
+    final phone = repository.phoneColours ? phoneColours : null;
     return MaterialApp(
       onGenerateTitle: (context) => context.l10n.appTitle,
       locale: locale,
@@ -66,8 +78,8 @@ class MedicineArchiveApp extends StatelessWidget {
       ],
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
-      theme: Brand.lightTheme(),
-      darkTheme: Brand.darkTheme(),
+      theme: Brand.lightTheme(phone: phone?.light),
+      darkTheme: Brand.darkTheme(phone: phone?.dark),
       builder: (context, child) {
         final app = authenticate == null
             ? child!
@@ -94,6 +106,7 @@ class MedicineArchiveApp extends StatelessWidget {
                 scanBarcode: scanBarcode,
                 backupFiles: backupFiles,
                 backupCodec: backupCodec,
+                canUsePhoneColours: phoneColours != null,
               ),
       ),
     );

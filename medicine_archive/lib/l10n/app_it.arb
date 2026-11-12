@@ -138,5 +138,6 @@
   "searchMedicines": "Cerca tra i farmaci di {name}",
   "noMatch": "Nessun farmaco corrisponde a \"{query}\"",
   "typeItIn": "Scrivi a mano",
-  "clearSearch": "Cancella la ricerca"
+  "clearSearch": "Cancella la ricerca",
+  "usePhoneColours": "Usa i colori del telefono"
 }

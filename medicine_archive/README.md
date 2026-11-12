@@ -30,6 +30,11 @@ read, and save it under the right profile.
   Settings > Apps > Medicine Archive > Language. The text lives in
   `lib/l10n/app_en.arb` and `lib/l10n/app_it.arb`; `flutter pub get`
   regenerates the Dart code from them.
+- **Phone colours:** on Android 12 and later, "Use my phone's colours" in
+  the profiles screen's ⋮ menu swaps the teal for the wallpaper's colours
+  (Material You). It is off by default, is kept on this phone only (not in
+  backups), and fonts and shapes stay the same. Tests check text contrast
+  and tap sizes with several wallpaper colours.
 - **Back swipe:** pages follow Android's predictive back gesture, and going
   back from a filled form asks before throwing it away.
 - **TalkBack:** each grouped medicine has "Move to …" actions in the
